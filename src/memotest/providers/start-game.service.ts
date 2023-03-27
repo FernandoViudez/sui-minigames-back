@@ -44,7 +44,7 @@ export class StartGameGateway {
     const gameBoard: GameBoard = await this.blockchainQueryService.getObject(
       gameSession.gameBoardObjectId,
     );
-    if (gameBoard.config.creator != gameSession.creator) {
+    if (gameBoard.config.fields.creator != gameSession.creator) {
       throw new UnauthorizedException();
     }
 

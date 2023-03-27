@@ -53,12 +53,8 @@ export class CreateRoomGateway {
     gameSession.cardsImage = environment.memotest.cardsImage;
     this.cacheManager.set(roomId, JSON.stringify(gameSession));
     client.join(roomId);
-
-    client.emit(
-      'room-created',
-      JSON.stringify({
-        roomId,
-      }),
-    );
+    client.emit('room-created', {
+      roomId,
+    });
   }
 }

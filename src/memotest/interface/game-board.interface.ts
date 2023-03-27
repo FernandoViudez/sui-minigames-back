@@ -5,13 +5,13 @@ import { Prize } from './prize.interface';
 
 export type GameBoardStatus = 'playing' | 'waiting' | 'finished';
 export interface GameBoard {
-  id: string;
+  id: { id: string };
   room: string;
-  cards: Card[];
-  players: Player[];
+  cards: { fields: Card }[];
+  players: { fields: Player }[];
   status: GameBoardStatus;
   cards_found: number;
-  prize: Prize;
+  prize: { fields: Prize };
   who_plays: PlayerId;
-  config: GameConfig;
+  config: { fields: GameConfig };
 }

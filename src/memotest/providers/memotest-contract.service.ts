@@ -6,7 +6,6 @@ import { CardId } from '../interface/card.interface';
 
 @Injectable()
 export class MemotestContractService {
-  private packageObjectId = environment.memotest.packageObjectId;
   private keypair = Ed25519Keypair.deriveKeypair(
     environment.memotest.authorized_addr,
     "m/44'/784'/0'/0'/0'",
@@ -28,6 +27,7 @@ export class MemotestContractService {
       function: 'update_card',
       module: 'memotest',
       typeArguments: [],
+      gasBudget: 1000,
       arguments: [
         environment.memotest.configObjectId,
         gameBoardObjectId,

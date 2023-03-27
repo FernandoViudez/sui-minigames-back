@@ -25,7 +25,7 @@ import { validationPipeConfig } from '../../_config/validation-pipe.config';
 @WebSocketGateway(environment.sockets.port)
 export class JoinRoomGateway {
   @WebSocketServer()
-  private server: Server;
+  server: Server;
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
@@ -62,20 +62,18 @@ export class JoinRoomGateway {
     const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
       gameSession.gameBoardObjectId,
     );
-    const player = gameBoard.players.find((player) => player.address == sender);
+    const player = gameBoard.players.find(
+      (player) => player.fields.addr == sender,
+    );
     gameSession.players.push({
       address: sender,
-      id: player.id,
+      id: player.fields.id,
       socketId: client.id,
     });
     await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
     client.join(data.roomId);
-
-    this.server.to(data.roomId).emit(
-      'player-joined',
-      JSON.stringify({
-        id: player.id,
-      }),
-    );
+    this.server.to(data.roomId).emit('player-joined', {
+      id: player.fields.id,
+    });
   }
 }

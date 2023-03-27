@@ -1,6 +1,7 @@
 import { Connection, JsonRpcProvider } from '@mysten/sui.js';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { environment } from '../environment/environment';
+import { GameBoard } from '../memotest/interface/game-board.interface';
 
 @Injectable()
 export class BlockchainQueryService {
@@ -18,10 +19,8 @@ export class BlockchainQueryService {
   async getObject<T>(objectId: string): Promise<T> {
     try {
       const res = await this.provider.getObject(objectId);
-      console.log(res);
-      return res as T;
+      return (res.details as any).data.fields as T;
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException();
     }
   }

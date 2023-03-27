@@ -60,7 +60,8 @@ export class TurnOverCardGateway {
 
     let currentCard = gameBoard.cards.find(
       (card) =>
-        card.location == data.position || card.per_location == data.position,
+        card.fields.location == data.position ||
+        card.fields.per_location == data.position,
     );
 
     if (
@@ -73,45 +74,50 @@ export class TurnOverCardGateway {
     if (!currentCard) {
       currentCard = this.selectRandomCard(gameBoard.cards);
       const { image, cards } = this.assignImage(gameSession.cardsImage);
+      currentCard.fields.image = image;
       gameSession.cardsImage = cards;
       await this.updateCardOnChain(
         gameSession.gameBoardObjectId,
-        currentCard.id,
+        currentCard.fields.id,
         data.position,
-        currentCard.location != 0,
+        currentCard.fields.location != 0,
         image,
       );
     }
 
+    let time = 1;
     if (!gameSession.currentTurn.cardsTurnedOver.length) {
       gameSession.currentTurn.cardsTurnedOver = [
         {
-          id: currentCard.id,
+          id: currentCard.fields.id,
           position: data.position,
         },
       ];
     } else {
       gameSession.currentTurn.cardsTurnedOver = [];
+      time = 2;
       // TODO: emit turn changed
     }
 
     await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
 
-    this.server.to(data.roomId).emit(
-      'card-turned-over',
-      JSON.stringify({
-        id: currentCard.id,
-        position: data.position,
-        image: currentCard.image,
-      }),
-    );
+    this.server.to(data.roomId).emit('card-turned-over', {
+      position: data.position,
+      image: currentCard.fields.image,
+    });
+    client.emit('card-selected', {
+      time,
+      id: currentCard.fields.id,
+      position: data.position,
+      image: currentCard.fields.image,
+    });
   }
 
-  private selectRandomCard(cards: Card[]) {
+  private selectRandomCard(cards: { fields: Card }[]) {
     const unassignedCards = cards.filter(
       (card) =>
-        card.found_by == constants.zero_address &&
-        (!card.location || !card.per_location),
+        card.fields.found_by == constants.zero_address &&
+        (!card.fields.location || !card.fields.per_location),
     );
     return unassignedCards[Math.floor(Math.random() * unassignedCards.length)];
   }
