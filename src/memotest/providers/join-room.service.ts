@@ -71,6 +71,7 @@ export class JoinRoomGateway {
       socketId: client.id,
     });
     await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
+    await this.cacheManager.set(client.id, data.roomId);
     client.join(data.roomId);
     this.server.to(data.roomId).emit('player-joined', {
       id: player.fields.id,

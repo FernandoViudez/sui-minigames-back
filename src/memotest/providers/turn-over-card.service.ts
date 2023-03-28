@@ -85,7 +85,6 @@ export class TurnOverCardGateway {
       );
     }
 
-    let time = 1;
     if (!gameSession.currentTurn.cardsTurnedOver.length) {
       gameSession.currentTurn.cardsTurnedOver = [
         {
@@ -95,18 +94,19 @@ export class TurnOverCardGateway {
       ];
     } else {
       gameSession.currentTurn.cardsTurnedOver = [];
-      time = 2;
-      // TODO: emit turn changed
+      this.server.to(data.roomId).emit('turn-changed', {
+        id: sender.id,
+      });
     }
 
     await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
 
     this.server.to(data.roomId).emit('card-turned-over', {
+      id: currentCard.fields.id,
       position: data.position,
       image: currentCard.fields.image,
     });
     client.emit('card-selected', {
-      time,
       id: currentCard.fields.id,
       position: data.position,
       image: currentCard.fields.image,
