@@ -21,8 +21,9 @@ import { GameSession } from '../type/game-session.type';
 import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameBoard } from '../interface/game-board.interface';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
+import { constants } from '../../environment/constants';
 
-@WebSocketGateway(environment.sockets.port)
+@WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class JoinRoomGateway {
   @WebSocketServer()
   server: Server;
