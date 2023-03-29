@@ -21,11 +21,12 @@ import { BlockchainQueryService } from '../../providers/blockchain-query.service
 import { GameBoard } from '../interface/game-board.interface';
 import { TurnOverCardDto } from '../dto/turn-over-card.dto';
 import { Card, CardId } from '../interface/card.interface';
-import { constants } from '../constants/constants';
+import { memotestConstants } from '../constants/constants';
 import { MemotestContractService } from './memotest-contract.service';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
+import { constants } from '../../environment/constants';
 
-@WebSocketGateway(environment.sockets.port)
+@WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class TurnOverCardGateway {
   @WebSocketServer()
   private server: Server;
@@ -116,7 +117,7 @@ export class TurnOverCardGateway {
   private selectRandomCard(cards: { fields: Card }[]) {
     const unassignedCards = cards.filter(
       (card) =>
-        card.fields.found_by == constants.zero_address &&
+        card.fields.found_by == memotestConstants.zero_address &&
         (!card.fields.location || !card.fields.per_location),
     );
     return unassignedCards[Math.floor(Math.random() * unassignedCards.length)];

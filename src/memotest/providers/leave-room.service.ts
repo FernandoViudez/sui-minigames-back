@@ -15,8 +15,9 @@ import { environment } from '../../environment/environment';
 import { Cache } from 'cache-manager';
 import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
+import { constants } from '../../environment/constants';
 
-@WebSocketGateway(environment.sockets.port)
+@WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class LeaveRoomGateway {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
   @UsePipes(validationPipeConfig)
