@@ -1,7 +1,6 @@
 import { Connection, JsonRpcProvider } from '@mysten/sui.js';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { environment } from '../environment/environment';
-import { GameBoard } from '../memotest/interface/game-board.interface';
 
 @Injectable()
 export class BlockchainQueryService {
