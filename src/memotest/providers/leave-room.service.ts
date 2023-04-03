@@ -3,6 +3,7 @@ import {
   BadRequestException,
   CACHE_MANAGER,
   Inject,
+  UseFilters,
   UsePipes,
 } from '@nestjs/common';
 import {
@@ -19,7 +20,9 @@ import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { MemotestContractService } from './memotest-contract.service';
 import { GameSessionError } from '../errors/game-session.error';
+import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 
+@UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class LeaveRoomGateway implements OnGatewayDisconnect {
   @WebSocketServer()

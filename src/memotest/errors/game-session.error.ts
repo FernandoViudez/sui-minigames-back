@@ -1,6 +1,14 @@
-export const enum GameSessionError {
-  gameNotFound = 'game session not found',
-  invalidPlayersLength = 'game session has invalid players length',
-  cantJoinTwice = 'cant join same player twice',
-  playerNotFound = 'player cant be found inside game session',
-}
+import { WsError } from '../../_type/ws-error.type';
+
+export const GameSessionError: WsError = {
+  gameNotFound: { message: 'Game session not found', code: 3 },
+  invalidPlayersLength: {
+    message: 'Game session has invalid players length',
+    code: 4,
+  },
+  cantJoinTwice: { message: 'Cant join same player twice', code: 5 },
+  playerNotFound: {
+    message: 'Player cant be found inside game session',
+    code: 6,
+  },
+};

@@ -4,6 +4,7 @@ import {
   CACHE_MANAGER,
   Inject,
   UnauthorizedException,
+  UseFilters,
   UsePipes,
 } from '@nestjs/common';
 import {
@@ -28,7 +29,8 @@ import { constants } from '../../environment/constants';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { GeneralError } from '../errors/general.error';
-
+import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
+@UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class TurnOverCardGateway {
   @WebSocketServer()

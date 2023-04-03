@@ -14,22 +14,26 @@ export const SuiUtils = {
   },
   sockets: {
     verifySocketSignature: async (signatureB64: string, socketId: string) => {
-      const { pubKey, signature } =
-        SuiUtils.signature.parseSerializedSignature(signatureB64);
-      const address = pubKey.toSuiAddress();
-      const dataToCheck = new Uint8Array(
-        Buffer.from(address + ':' + socketId, 'utf8'),
-      );
-      const hash = blake2b(32).update(dataToCheck).digest();
-      const isValid = await SuiUtils.signature.verify(
-        signature,
-        hash,
-        pubKey.toBytes(),
-      );
-      if (isValid) {
-        return address;
+      try {
+        const { pubKey, signature } =
+          SuiUtils.signature.parseSerializedSignature(signatureB64);
+        const address = pubKey.toSuiAddress();
+        const dataToCheck = new Uint8Array(
+          Buffer.from(address + ':' + socketId, 'utf8'),
+        );
+        const hash = blake2b(32).update(dataToCheck).digest();
+        const isValid = await SuiUtils.signature.verify(
+          signature,
+          hash,
+          pubKey.toBytes(),
+        );
+        if (isValid) {
+          return address;
+        }
+        return false;
+      } catch (error) {
+        return false;
       }
-      return false;
     },
   },
 };

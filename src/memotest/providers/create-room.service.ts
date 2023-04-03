@@ -21,7 +21,10 @@ import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { GeneralError } from '../errors/general.error';
+import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
+import { UseFilters } from '@nestjs/common/decorators';
 
+@UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class CreateRoomGateway {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}

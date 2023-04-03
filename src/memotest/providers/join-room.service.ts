@@ -5,6 +5,7 @@ import {
   Inject,
   UsePipes,
   UnauthorizedException,
+  UseFilters,
 } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -26,8 +27,10 @@ import { constants } from '../../environment/constants';
 import { GeneralError } from '../errors/general.error';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
+import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
+@UseFilters(MemotestExceptionsFilter)
 export class JoinRoomGateway {
   @WebSocketServer()
   server: Server;
