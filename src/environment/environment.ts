@@ -12,5 +12,6 @@ export const environment = {
     authorized_addr: process.env.SUI_AUTHORIZED_ADDRESS,
     packageObjectId: process.env.PACKAGE_OBJECT_ID,
     configObjectId: process.env.CONFIG_OBJECT_ID,
+    matchDuration: Number(process.env.MATCH_DURATION),
   },
 };

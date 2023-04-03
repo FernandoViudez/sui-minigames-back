@@ -17,8 +17,13 @@ export class BlockchainQueryService {
 
   async getObject<T>(objectId: string): Promise<T> {
     try {
-      const res = await this.provider.getObject(objectId);
-      return (res.details as any).data.fields as T;
+      const res = await this.provider.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+        },
+      });
+      return (res.data.content as any).fields as T;
     } catch (error) {
       throw new InternalServerErrorException();
     }

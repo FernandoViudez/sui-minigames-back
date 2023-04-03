@@ -4,6 +4,7 @@ import {
   CACHE_MANAGER,
   Inject,
   UsePipes,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -66,6 +67,9 @@ export class JoinRoomGateway {
     const player = gameBoard.players.find(
       (player) => player.fields.addr == sender,
     );
+    if (!player) {
+      throw new UnauthorizedException();
+    }
     gameSession.players.push({
       address: sender,
       id: player.fields.id,

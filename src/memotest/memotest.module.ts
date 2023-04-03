@@ -5,9 +5,15 @@ import { StartGameGateway } from './providers/start-game.service';
 import { TurnOverCardGateway } from './providers/turn-over-card.service';
 import { MemotestContractService } from './providers/memotest-contract.service';
 import { BlockchainQueryService } from '../providers/blockchain-query.service';
+import { environment } from '../environment/environment';
+import { LeaveRoomGateway } from './providers/leave-room.service';
 
 @Module({
-  imports: [CacheModule.register()],
+  imports: [
+    CacheModule.register({
+      ttl: environment.memotest.matchDuration,
+    }),
+  ],
   providers: [
     CreateRoomGateway,
     JoinRoomGateway,
@@ -15,6 +21,7 @@ import { BlockchainQueryService } from '../providers/blockchain-query.service';
     TurnOverCardGateway,
     MemotestContractService,
     BlockchainQueryService,
+    LeaveRoomGateway,
   ],
 })
 export class MemotestModule {}

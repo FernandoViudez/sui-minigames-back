@@ -21,7 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@mysten/sui.js": "^0.29.1",
+    "@mysten/sui.js": "^0.30.0",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
@@ -29,6 +29,7 @@
     "@nestjs/platform-socket.io": "^9.3.11",
     "@nestjs/websockets": "^9.3.11",
     "@noble/ed25519": "^1.7.3",
+    "blake2b": "^2.1.4",
     "cache-manager": "^5.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",

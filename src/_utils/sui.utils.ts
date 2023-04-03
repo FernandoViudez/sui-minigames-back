@@ -1,5 +1,7 @@
 import { fromSerializedSignature } from '@mysten/sui.js';
 import { verify } from '@noble/ed25519';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const blake2b = require('blake2b');
 
 export const SuiUtils = {
   signature: {
@@ -14,11 +16,14 @@ export const SuiUtils = {
     verifySocketSignature: async (signatureB64: string, socketId: string) => {
       const { pubKey, signature } =
         SuiUtils.signature.parseSerializedSignature(signatureB64);
-      const address = '0x' + pubKey.toSuiAddress();
-      const dataToCheck = new Uint8Array(Buffer.from(address + ':' + socketId));
+      const address = pubKey.toSuiAddress();
+      const dataToCheck = new Uint8Array(
+        Buffer.from(address + ':' + socketId, 'utf8'),
+      );
+      const hash = blake2b(32).update(dataToCheck).digest();
       const isValid = await SuiUtils.signature.verify(
         signature,
-        dataToCheck,
+        hash,
         pubKey.toBytes(),
       );
       if (isValid) {

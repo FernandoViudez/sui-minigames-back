@@ -86,22 +86,6 @@ export class TurnOverCardGateway {
       );
     }
 
-    if (!gameSession.currentTurn.cardsTurnedOver.length) {
-      gameSession.currentTurn.cardsTurnedOver = [
-        {
-          id: currentCard.fields.id,
-          position: data.position,
-        },
-      ];
-    } else {
-      gameSession.currentTurn.cardsTurnedOver = [];
-      this.server.to(data.roomId).emit('turn-changed', {
-        id: sender.id,
-      });
-    }
-
-    await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
-
     this.server.to(data.roomId).emit('card-turned-over', {
       id: currentCard.fields.id,
       position: data.position,
@@ -112,6 +96,20 @@ export class TurnOverCardGateway {
       position: data.position,
       image: currentCard.fields.image,
     });
+
+    if (!gameSession.currentTurn.cardsTurnedOver.length) {
+      gameSession.currentTurn.cardsTurnedOver = [
+        {
+          id: currentCard.fields.id,
+          position: data.position,
+        },
+      ];
+    } else {
+      gameSession.currentTurn.cardsTurnedOver = [];
+      this.server.to(data.roomId).emit('turn-changed');
+    }
+
+    await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
   }
 
   private selectRandomCard(cards: { fields: Card }[]) {

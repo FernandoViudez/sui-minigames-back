@@ -1,4 +1,4 @@
-import { Ed25519Keypair, RawSigner } from '@mysten/sui.js';
+import { Ed25519Keypair, RawSigner, TransactionBlock } from '@mysten/sui.js';
 import { Injectable } from '@nestjs/common';
 import { environment } from '../../environment/environment';
 import { BlockchainQueryService } from '../../providers/blockchain-query.service';
@@ -22,20 +22,31 @@ export class MemotestContractService {
     modifyPer: boolean,
     newImage: string,
   ) {
-    await this.signer.executeMoveCall({
-      packageObjectId: environment.memotest.packageObjectId,
-      function: 'update_card',
-      module: 'memotest',
-      typeArguments: [],
-      gasBudget: 1000,
+    const tx = new TransactionBlock();
+    tx.moveCall({
+      target: `${environment.memotest.packageObjectId}::memotest::update_card`,
       arguments: [
-        environment.memotest.configObjectId,
-        gameBoardObjectId,
-        cardId,
-        newLocation,
-        modifyPer,
-        newImage,
+        tx.pure(environment.memotest.configObjectId),
+        tx.pure(gameBoardObjectId),
+        tx.pure(cardId),
+        tx.pure(newLocation),
+        tx.pure(modifyPer),
+        tx.pure(newImage),
       ],
     });
+    tx.setGasBudget(10000);
+    await this.signer.signAndExecuteTransactionBlock({
+      transactionBlock: tx,
+    });
+  }
+
+  async disconnectPlayer(gameBoardObjectId: string, playerId: number) {
+    const tx = new TransactionBlock();
+    tx.moveCall({
+      target: `${environment.memotest.packageObjectId}::memotest::disconnect_player`,
+      arguments: [tx.pure(gameBoardObjectId), tx.pure(playerId)],
+    });
+    tx.setGasBudget(10000);
+    await this.signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
   }
 }
