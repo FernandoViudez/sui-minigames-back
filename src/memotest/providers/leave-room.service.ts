@@ -30,6 +30,8 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
   @UsePipes(validationPipeConfig)
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     const roomId: string = await this.cacheManager.get(client.id);
+    // TODO: Refactor, should add something like "actual-game" for all sockets and execute this logic if "actual-game" == "memotest"
+    if (!roomId) return;
     const gameSession: GameSession = JSON.parse(
       await this.cacheManager.get(roomId),
     );
