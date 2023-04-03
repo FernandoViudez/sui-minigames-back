@@ -23,6 +23,9 @@ import { BlockchainQueryService } from '../../providers/blockchain-query.service
 import { GameBoard } from '../interface/game-board.interface';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
+import { GeneralError } from '../errors/general.error';
+import { GameSessionError } from '../errors/game-session.error';
+import { GameBoardError } from '../errors/game-board.error';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class JoinRoomGateway {
@@ -43,22 +46,22 @@ export class JoinRoomGateway {
       client.id,
     );
     if (!sender) {
-      throw new BadRequestException();
+      throw new BadRequestException(GeneralError.invalidSignature);
     }
     const gameSession: GameSession = JSON.parse(
       await this.cacheManager.get(data.roomId),
     );
     if (!gameSession) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.gameNotFound);
     }
     if (gameSession.players.length >= 4) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.invalidPlayersLength);
     }
     const alreadyJoined = gameSession.players.find(
       (player) => player.address == sender,
     );
     if (alreadyJoined) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.cantJoinTwice);
     }
 
     const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
@@ -68,7 +71,7 @@ export class JoinRoomGateway {
       (player) => player.fields.addr == sender,
     );
     if (!player) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(GameBoardError.playerNotFound);
     }
     gameSession.players.push({
       address: sender,

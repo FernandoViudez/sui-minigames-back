@@ -25,6 +25,9 @@ import { memotestConstants } from '../constants/constants';
 import { MemotestContractService } from './memotest-contract.service';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
+import { GameSessionError } from '../errors/game-session.error';
+import { GameBoardError } from '../errors/game-board.error';
+import { GeneralError } from '../errors/general.error';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class TurnOverCardGateway {
@@ -45,7 +48,7 @@ export class TurnOverCardGateway {
       await this.cacheManager.get(data.roomId),
     );
     if (!gameSession) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.gameNotFound);
     }
 
     const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
@@ -56,7 +59,7 @@ export class TurnOverCardGateway {
       (player) => player.socketId == client.id,
     );
     if (gameBoard.who_plays != sender.id) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(GameBoardError.incorrectTurn);
     }
 
     let currentCard = gameBoard.cards.find(
@@ -69,7 +72,9 @@ export class TurnOverCardGateway {
       gameSession.currentTurn.cardsTurnedOver.length == 1 &&
       gameSession.currentTurn.cardsTurnedOver[0].position == data.position
     ) {
-      throw new BadRequestException();
+      throw new BadRequestException(
+        GeneralError.positionAlreadyChosenInSameTurn,
+      );
     }
 
     if (!currentCard) {

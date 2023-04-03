@@ -18,6 +18,7 @@ import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { MemotestContractService } from './memotest-contract.service';
+import { GameSessionError } from '../errors/game-session.error';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class LeaveRoomGateway implements OnGatewayDisconnect {
@@ -36,13 +37,13 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
       await this.cacheManager.get(roomId),
     );
     if (!gameSession) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.gameNotFound);
     }
     const idx = gameSession.players.findIndex(
       (player) => player.socketId == client.id,
     );
     if (idx < 0) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.playerNotFound);
     }
     const playerId = gameSession.players[idx].id;
     gameSession.players.splice(idx, 1);

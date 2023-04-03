@@ -20,6 +20,7 @@ import { Cache } from 'cache-manager';
 import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
+import { GeneralError } from '../errors/general.error';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class CreateRoomGateway {
@@ -35,7 +36,7 @@ export class CreateRoomGateway {
       client.id,
     );
     if (!sender) {
-      throw new BadRequestException();
+      throw new BadRequestException(GeneralError.invalidSignature);
     }
     const roomId = SocketUtils.room.createRandomId();
     const gameSession = new GameSession();

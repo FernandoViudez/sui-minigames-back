@@ -25,7 +25,7 @@ export class BlockchainQueryService {
       });
       return (res.data.content as any).fields as T;
     } catch (error) {
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException(error);
     }
   }
 }

@@ -21,6 +21,8 @@ import { BlockchainQueryService } from '../../providers/blockchain-query.service
 import { GameBoard } from '../interface/game-board.interface';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
+import { GameSessionError } from '../errors/game-session.error';
+import { GameBoardError } from '../errors/game-board.error';
 
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class StartGameGateway {
@@ -37,20 +39,22 @@ export class StartGameGateway {
       await this.cacheManager.get(data.roomId),
     );
     if (!gameSession) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.gameNotFound);
     }
     if (gameSession.players.length < 2 || gameSession.players.length > 4) {
-      throw new BadRequestException();
+      throw new BadRequestException(GameSessionError.invalidPlayersLength);
     }
     const gameBoard: GameBoard = await this.blockchainQueryService.getObject(
       gameSession.gameBoardObjectId,
     );
     if (gameBoard.config.fields.creator != gameSession.creator) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(GameBoardError.cantStartGame);
     }
 
     if (gameBoard.status != 'playing') {
-      throw new BadRequestException();
+      throw new BadRequestException(
+        GameBoardError.invalidStatusForStartingGame,
+      );
     }
 
     this.server.to(data.roomId).emit('game-started');
