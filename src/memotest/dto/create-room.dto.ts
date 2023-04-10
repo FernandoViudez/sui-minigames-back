@@ -6,5 +6,8 @@ export class CreateRoomDto {
   readonly signature: string;
   @IsString()
   @IsDefined()
+  readonly publicKey: string;
+  @IsString()
+  @IsDefined()
   readonly gameBoardObjectId: string;
 }

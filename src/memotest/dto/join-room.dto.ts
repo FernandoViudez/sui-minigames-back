@@ -6,5 +6,8 @@ export class JoinRoomDto {
   readonly roomId: string;
   @IsDefined()
   @IsString()
+  readonly publicKey: string;
+  @IsDefined()
+  @IsString()
   readonly signature: string;
 }
