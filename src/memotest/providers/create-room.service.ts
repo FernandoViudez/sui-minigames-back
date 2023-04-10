@@ -36,6 +36,7 @@ export class CreateRoomGateway {
   ) {
     const sender = await SuiUtils.sockets.verifySocketSignature(
       data.signature,
+      data.publicKey,
       client.id,
     );
     if (!sender) {
