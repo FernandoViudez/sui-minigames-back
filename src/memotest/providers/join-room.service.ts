@@ -29,8 +29,8 @@ import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 
-@WebSocketGateway(environment.sockets.port, constants.socketConfig)
 @UseFilters(MemotestExceptionsFilter)
+@WebSocketGateway(environment.sockets.port, constants.socketConfig)
 export class JoinRoomGateway {
   @WebSocketServer()
   server: Server;
