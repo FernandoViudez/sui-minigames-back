@@ -1,5 +1,5 @@
 import { Connection, JsonRpcProvider } from '@mysten/sui.js';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { environment } from '../environment/environment';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class BlockchainQueryService {
       });
       return (res.data.content as any).fields as T;
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      console.log(error);
     }
   }
 }
