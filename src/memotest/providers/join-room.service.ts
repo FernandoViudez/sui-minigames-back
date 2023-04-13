@@ -35,7 +35,6 @@ import { Player } from '../interface/player.interface';
 export class JoinRoomGateway {
   @WebSocketServer()
   server: Server;
-  time = 1;
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
