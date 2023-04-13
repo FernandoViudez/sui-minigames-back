@@ -12,6 +12,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { environment } from '../../environment/environment';
@@ -25,6 +26,7 @@ import { constants } from '../../environment/constants';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
+import { Socket } from 'socket.io';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
@@ -37,9 +39,15 @@ export class StartGameGateway {
   ) {}
   @UsePipes(validationPipeConfig)
   @SubscribeMessage('start-game')
-  async onStartGame(@MessageBody() data: StartGameDto) {
+  async onStartGame(
+    @MessageBody() data: StartGameDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const gameSession: GameSession = JSON.parse(
       await this.cacheManager.get(data.roomId),
+    );
+    const currentPlayer = gameSession.players.find(
+      (player) => player.socketId == client.id,
     );
     if (!gameSession) {
       throw new BadRequestException(GameSessionError.gameNotFound);
@@ -47,10 +55,27 @@ export class StartGameGateway {
     if (gameSession.players.length < 2 || gameSession.players.length > 4) {
       throw new BadRequestException(GameSessionError.invalidPlayersLength);
     }
+
+    try {
+      await this.checkGameOnChain(
+        gameSession.gameBoardObjectId,
+        currentPlayer.address,
+      );
+    } catch (error) {
+      await this.blockchainQueryService.retry<true>(
+        this.checkGameOnChain.bind(this),
+        [gameSession.gameBoardObjectId, currentPlayer.address],
+      );
+    }
+
+    this.server.to(data.roomId).emit('game-started');
+  }
+
+  private async checkGameOnChain(gameBoardObjectId: string, creator: string) {
     const gameBoard: GameBoard = await this.blockchainQueryService.getObject(
-      gameSession.gameBoardObjectId,
+      gameBoardObjectId,
     );
-    if (gameBoard.config.fields.creator != gameSession.creator) {
+    if (gameBoard.config.fields.creator != creator) {
       throw new UnauthorizedException(GameBoardError.cantStartGame);
     }
 
@@ -60,6 +85,6 @@ export class StartGameGateway {
       );
     }
 
-    this.server.to(data.roomId).emit('game-started');
+    return true;
   }
 }

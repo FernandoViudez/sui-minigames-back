@@ -3,6 +3,7 @@ export const environment = {
   sui: {
     rcp: process.env.RCP,
     faucet: process.env.FAUCET,
+    maxRetry: Number(process.env.MAX_RETRY) || 0,
   },
   sockets: {
     port: Number(process.env.GATEWAY_PORT),
