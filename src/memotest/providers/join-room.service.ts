@@ -104,13 +104,8 @@ export class JoinRoomGateway {
     const player = gameBoard.players.find(
       (player) => player.fields.addr == sender,
     );
-    this.time++;
-    if (this.time >= 4) {
-      return player;
-    } else {
-      throw new UnauthorizedException(GameBoardError.playerNotFound);
-    }
     if (!player) {
+      throw new UnauthorizedException(GameBoardError.playerNotFound);
     }
     return player;
   }
