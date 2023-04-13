@@ -53,22 +53,25 @@ export class TurnOverCardGateway {
       throw new BadRequestException(GameSessionError.gameNotFound);
     }
 
-    const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
-      gameSession.gameBoardObjectId,
-    );
-
-    const sender = gameSession.players.find(
-      (player) => player.socketId == client.id,
-    );
-    if (gameBoard.who_plays != sender.id) {
-      throw new UnauthorizedException(GameBoardError.incorrectTurn);
+    let currentCard;
+    let gameBoard;
+    try {
+      const res = await this.checkCardOnChain(
+        gameSession,
+        data.position,
+        client.id,
+      );
+      currentCard = res.currentCard;
+      gameBoard = res.gameBoard;
+    } catch (error) {
+      const res = await this.blockchainQueryService.retry<any>(
+        this.checkCardOnChain,
+        [gameSession, data.position, client.id],
+        false,
+      );
+      currentCard = res.currentCard;
+      gameBoard = res.gameBoard;
     }
-
-    let currentCard = gameBoard.cards.find(
-      (card) =>
-        card.fields.location == data.position ||
-        card.fields.per_location == data.position,
-    );
 
     if (
       gameSession.currentTurn.cardsTurnedOver.length == 1 &&
@@ -117,6 +120,41 @@ export class TurnOverCardGateway {
     }
 
     await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
+  }
+
+  private async checkCardOnChain(
+    gameSession: GameSession,
+    position: number,
+    socketId: string,
+  ) {
+    const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
+      gameSession.gameBoardObjectId,
+    );
+    this.checkCurrentTurn(gameSession.players, gameBoard.who_plays, socketId);
+    const currentCard = this.getCardFromPosition(gameBoard, position);
+    return {
+      currentCard,
+      gameBoard,
+    };
+  }
+
+  private getCardFromPosition(gameBoard: GameBoard, position: number) {
+    const currentCard = gameBoard.cards.find(
+      (card) =>
+        card.fields.location == position ||
+        card.fields.per_location == position,
+    );
+    if (!currentCard) {
+      throw new BadRequestException();
+    }
+    return currentCard;
+  }
+
+  private checkCurrentTurn(players: any[], whoPlays: number, socketId: string) {
+    const sender = players.find((player) => player.socketId == socketId);
+    if (whoPlays != sender.id) {
+      throw new UnauthorizedException(GameBoardError.incorrectTurn);
+    }
   }
 
   private selectRandomCard(cards: { fields: Card }[]) {

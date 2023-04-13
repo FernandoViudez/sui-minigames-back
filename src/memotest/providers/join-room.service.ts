@@ -28,6 +28,7 @@ import { GeneralError } from '../errors/general.error';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
+import { Player } from '../interface/player.interface';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, constants.socketConfig)
@@ -67,15 +68,17 @@ export class JoinRoomGateway {
     if (alreadyJoined) {
       throw new BadRequestException(GameSessionError.cantJoinTwice);
     }
-
-    const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
-      gameSession.gameBoardObjectId,
-    );
-    const player = gameBoard.players.find(
-      (player) => player.fields.addr == sender,
-    );
-    if (!player) {
-      throw new UnauthorizedException(GameBoardError.playerNotFound);
+    let player: any;
+    try {
+      player = (await this.checkPlayerOnChain(
+        sender,
+        gameSession.gameBoardObjectId,
+      )) as { fields: Player };
+    } catch (error) {
+      player = await this.blockchainQueryService.retry<{ fields: Player }>(
+        this.checkPlayerOnChain.bind(this),
+        [sender, gameSession.gameBoardObjectId],
+      );
     }
     gameSession.players.push({
       address: sender,
@@ -88,5 +91,21 @@ export class JoinRoomGateway {
     this.server.to(data.roomId).emit('player-joined', {
       id: player.fields.id,
     });
+  }
+
+  private async checkPlayerOnChain(
+    sender: string,
+    gameBoardObjectId: string,
+  ): Promise<{ fields: Player } | false> {
+    const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
+      gameBoardObjectId,
+    );
+    const player = gameBoard.players.find(
+      (player) => player.fields.addr == sender,
+    );
+    if (!player) {
+      throw new UnauthorizedException(GameBoardError.playerNotFound);
+    }
+    return player;
   }
 }
