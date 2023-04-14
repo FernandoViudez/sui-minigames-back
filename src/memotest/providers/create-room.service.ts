@@ -1,10 +1,5 @@
 /* eslint-disable prettier/prettier */
-import {
-  BadRequestException,
-  CACHE_MANAGER,
-  Inject,
-  UsePipes,
-} from '@nestjs/common';
+import { BadRequestException, UsePipes } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -16,7 +11,6 @@ import { CreateRoomDto } from '../dto/create-room.dto';
 import { Socket } from 'socket.io';
 import { SuiUtils } from '../../_utils/sui.utils';
 import { SocketUtils } from '../../_utils/socket.utils';
-import { Cache } from 'cache-manager';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { GeneralError } from '../errors/general.error';
@@ -34,7 +28,6 @@ import { PlayerService } from './player.service';
 })
 export class CreateRoomGateway {
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly roomService: RoomService,
     private readonly gameSessionService: GameSessionService,
     private readonly playerService: PlayerService,

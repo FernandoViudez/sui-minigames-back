@@ -6,16 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameSession } from '../type/game-session.type';
 
 @Injectable()
 export class GameSessionService {
-  constructor(
-    private readonly blockchainQueryService: BlockchainQueryService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {}
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
   async saveNewGame(
     gameBoardObjectId: string,
     socketId: string,

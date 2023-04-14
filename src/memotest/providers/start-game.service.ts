@@ -1,8 +1,6 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
-  CACHE_MANAGER,
-  Inject,
   UnauthorizedException,
   UseFilters,
   UsePipes,
@@ -15,7 +13,6 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { environment } from '../../environment/environment';
-import { Cache } from 'cache-manager';
 import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameBoard } from '../interface/game-board.interface';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
@@ -38,7 +35,6 @@ export class StartGameGateway {
   @WebSocketServer()
   private server: Server;
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
     private readonly gameSessionService: GameSessionService,
     private readonly playerService: PlayerService,

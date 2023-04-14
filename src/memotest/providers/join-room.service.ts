@@ -1,8 +1,6 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
-  CACHE_MANAGER,
-  Inject,
   UsePipes,
   UnauthorizedException,
   UseFilters,
@@ -18,7 +16,6 @@ import { Server, Socket } from 'socket.io';
 import { environment } from '../../environment/environment';
 import { SuiUtils } from '../../_utils/sui.utils';
 import { JoinRoomDto } from '../dto/join-room.dto';
-import { Cache } from 'cache-manager';
 import { GameSession } from '../type/game-session.type';
 import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameBoard } from '../interface/game-board.interface';
@@ -42,7 +39,6 @@ export class JoinRoomGateway {
   @WebSocketServer()
   server: Server;
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
     private readonly gameSessionService: GameSessionService,
     private readonly playerService: PlayerService,

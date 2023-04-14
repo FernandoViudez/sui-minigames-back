@@ -5,16 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameSessionError } from '../errors/game-session.error';
-import { Player } from '../interface/socket/player.class';
+import { Player } from '../type/player.class';
 
 @Injectable()
 export class PlayerService {
-  constructor(
-    private readonly blockchainQueryService: BlockchainQueryService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-  ) {}
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
   async saveNewPlayer(
     roomId: string,
     socketId: string,

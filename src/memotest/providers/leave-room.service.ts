@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { CACHE_MANAGER, Inject, UseFilters, UsePipes } from '@nestjs/common';
+import { UseFilters, UsePipes } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayDisconnect,
@@ -8,7 +8,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { environment } from '../../environment/environment';
-import { Cache } from 'cache-manager';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { MemotestContractService } from './memotest-contract.service';
@@ -26,7 +25,6 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly memotestContractService: MemotestContractService,
     private readonly playerService: PlayerService,
     private readonly gameSessionService: GameSessionService,

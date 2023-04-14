@@ -1,8 +1,6 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
-  CACHE_MANAGER,
-  Inject,
   UnauthorizedException,
   UseFilters,
   UsePipes,
@@ -16,7 +14,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { environment } from '../../environment/environment';
-import { Cache } from 'cache-manager';
 import { GameSession } from '../type/game-session.type';
 import { BlockchainQueryService } from '../../providers/blockchain-query.service';
 import { GameBoard } from '../interface/game-board.interface';
@@ -41,7 +38,6 @@ export class TurnOverCardGateway {
   @WebSocketServer()
   private server: Server;
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
     private readonly memotestContractService: MemotestContractService,
     private readonly playerService: PlayerService,
