@@ -1,22 +1,12 @@
+import { environment } from '../../environment/environment';
+
 export class GameSession {
   gameBoardObjectId: string;
-  creator: string;
-  players: Player[];
-  currentTurn: CurrentTurn;
-  cardsImage: string[];
-}
-
-class CurrentTurn {
-  cardsTurnedOver: Card[];
-}
-
-class Card {
-  id: number;
-  position: number;
-}
-
-class Player {
-  address: string;
-  id: number;
-  socketId: string;
+  players: string[] = [];
+  cardsImage: string[] = environment.memotest.cardsImage;
+  playingCardPosition = 0;
+  constructor(gameBoardObjectId: string, player: string) {
+    this.gameBoardObjectId = gameBoardObjectId;
+    this.players.push(player);
+  }
 }

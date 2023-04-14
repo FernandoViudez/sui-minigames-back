@@ -30,6 +30,8 @@ import { GameBoardError } from '../errors/game-board.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { Player } from '../interface/player.interface';
 import { Namespace } from '../../_type/socket-namespaces.type';
+import { PlayerService } from './player.service';
+import { GameSessionService } from './game-session.service';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
@@ -42,6 +44,8 @@ export class JoinRoomGateway {
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly blockchainQueryService: BlockchainQueryService,
+    private readonly gameSessionService: GameSessionService,
+    private readonly playerService: PlayerService,
   ) {}
   @UsePipes(validationPipeConfig)
   @SubscribeMessage('join')
@@ -57,21 +61,22 @@ export class JoinRoomGateway {
     if (!sender) {
       throw new BadRequestException(GeneralError.invalidSignature);
     }
-    const gameSession: GameSession = JSON.parse(
-      await this.cacheManager.get(data.roomId),
-    );
-    if (!gameSession) {
-      throw new BadRequestException(GameSessionError.gameNotFound);
-    }
+
+    const gameSession: GameSession =
+      await this.gameSessionService.getGameSessionFromRoomId(data.roomId);
+
     if (gameSession.players.length >= 4) {
       throw new BadRequestException(GameSessionError.invalidPlayersLength);
     }
+
     const alreadyJoined = gameSession.players.find(
-      (player) => player.address == sender,
+      (player) => player == client.id,
     );
+
     if (alreadyJoined) {
       throw new BadRequestException(GameSessionError.cantJoinTwice);
     }
+
     let player: any;
     try {
       player = (await this.checkPlayerOnChain(
@@ -84,13 +89,14 @@ export class JoinRoomGateway {
         [sender, gameSession.gameBoardObjectId],
       );
     }
-    gameSession.players.push({
-      address: sender,
-      id: player.fields.id,
-      socketId: client.id,
-    });
-    await this.cacheManager.set(data.roomId, JSON.stringify(gameSession));
-    await this.cacheManager.set(client.id, data.roomId);
+
+    await this.playerService.saveNewPlayer(
+      data.roomId,
+      client.id,
+      sender,
+      player.fields.id,
+    );
+
     client.join(data.roomId);
     this.server.to(data.roomId).emit('player-joined', {
       id: player.fields.id,

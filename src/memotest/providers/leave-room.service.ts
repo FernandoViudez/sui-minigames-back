@@ -1,11 +1,5 @@
 /* eslint-disable prettier/prettier */
-import {
-  BadRequestException,
-  CACHE_MANAGER,
-  Inject,
-  UseFilters,
-  UsePipes,
-} from '@nestjs/common';
+import { CACHE_MANAGER, Inject, UseFilters, UsePipes } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayDisconnect,
@@ -15,13 +9,13 @@ import {
 import { Server, Socket } from 'socket.io';
 import { environment } from '../../environment/environment';
 import { Cache } from 'cache-manager';
-import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { MemotestContractService } from './memotest-contract.service';
-import { GameSessionError } from '../errors/game-session.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { Namespace } from '../../_type/socket-namespaces.type';
+import { PlayerService } from './player.service';
+import { GameSessionService } from './game-session.service';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
@@ -34,31 +28,20 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly memotestContractService: MemotestContractService,
+    private readonly playerService: PlayerService,
+    private readonly gameSessionService: GameSessionService,
   ) {}
   @UsePipes(validationPipeConfig)
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    const roomId: string = await this.cacheManager.get(client.id);
-    if (!roomId) return;
-    const gameSession: GameSession = JSON.parse(
-      await this.cacheManager.get(roomId),
+    const player = await this.playerService.removePlayer(client.id);
+    const gameSession = await this.gameSessionService.removePlayer(
+      player.roomId,
+      client.id,
     );
-    if (!gameSession) {
-      throw new BadRequestException(GameSessionError.gameNotFound);
-    }
-    const idx = gameSession.players.findIndex(
-      (player) => player.socketId == client.id,
-    );
-    if (idx < 0) {
-      throw new BadRequestException(GameSessionError.playerNotFound);
-    }
-    const playerId = gameSession.players[idx].id;
-    gameSession.players.splice(idx, 1);
-    await this.cacheManager.del(client.id);
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
     await this.memotestContractService.disconnectPlayer(
       gameSession.gameBoardObjectId,
-      playerId,
+      player.id,
     );
-    this.server.to(roomId).emit('player-left', { id: playerId });
+    this.server.to(player.roomId).emit('player-left', { id: player.id });
   }
 }

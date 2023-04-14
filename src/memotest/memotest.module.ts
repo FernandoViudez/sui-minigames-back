@@ -7,6 +7,9 @@ import { MemotestContractService } from './providers/memotest-contract.service';
 import { BlockchainQueryService } from '../providers/blockchain-query.service';
 import { environment } from '../environment/environment';
 import { LeaveRoomGateway } from './providers/leave-room.service';
+import { RoomService } from './providers/room.service';
+import { GameSessionService } from './providers/game-session.service';
+import { PlayerService } from './providers/player.service';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { LeaveRoomGateway } from './providers/leave-room.service';
     MemotestContractService,
     BlockchainQueryService,
     LeaveRoomGateway,
+    RoomService,
+    GameSessionService,
+    PlayerService,
   ],
 })
 export class MemotestModule {}
