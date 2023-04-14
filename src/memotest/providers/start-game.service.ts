@@ -27,9 +27,13 @@ import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { Socket } from 'socket.io';
+import { Namespace } from '../../_type/socket-namespaces.type';
 
 @UseFilters(MemotestExceptionsFilter)
-@WebSocketGateway(environment.sockets.port, constants.socketConfig)
+@WebSocketGateway(environment.sockets.port, {
+  ...constants.socketConfig,
+  namespace: Namespace.memotest,
+})
 export class StartGameGateway {
   @WebSocketServer()
   private server: Server;

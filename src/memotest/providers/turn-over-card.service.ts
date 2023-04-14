@@ -30,8 +30,12 @@ import { GameSessionError } from '../errors/game-session.error';
 import { GameBoardError } from '../errors/game-board.error';
 import { GeneralError } from '../errors/general.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
+import { Namespace } from '../../_type/socket-namespaces.type';
 @UseFilters(MemotestExceptionsFilter)
-@WebSocketGateway(environment.sockets.port, constants.socketConfig)
+@WebSocketGateway(environment.sockets.port, {
+  ...constants.socketConfig,
+  namespace: Namespace.memotest,
+})
 export class TurnOverCardGateway {
   @WebSocketServer()
   private server: Server;
