@@ -73,18 +73,10 @@ export class JoinRoomGateway {
       throw new BadRequestException(GameSessionError.cantJoinTwice);
     }
 
-    let player: any;
-    try {
-      player = (await this.checkPlayerOnChain(
-        sender,
-        gameSession.gameBoardObjectId,
-      )) as { fields: Player };
-    } catch (error) {
-      player = await this.blockchainQueryService.retry<{ fields: Player }>(
-        this.checkPlayerOnChain.bind(this),
-        [sender, gameSession.gameBoardObjectId],
-      );
-    }
+    const player = (await this.blockchainQueryService.retry<{ fields: Player }>(
+      this.checkPlayerOnChain.bind(this),
+      [sender, gameSession.gameBoardObjectId],
+    )) as { fields: Player };
 
     await this.playerService.saveNewPlayer(
       data.roomId,

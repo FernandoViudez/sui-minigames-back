@@ -54,14 +54,13 @@ export class CreateRoomGateway {
       client.id,
       roomId,
     );
-    if (!data.isPrivate) {
-      await this.roomService.addRoom({
-        code: roomId + ':' + data.gameBoardObjectId,
-        id: roomId,
-        owner: sender,
-        status: 'waiting',
-      });
-    }
+    await this.roomService.addRoom({
+      code: roomId + ':' + data.gameBoardObjectId,
+      id: roomId,
+      owner: sender,
+      status: 'waiting',
+      isPrivate: data.isPrivate,
+    });
 
     client.join(roomId);
     client.emit('room-created', {

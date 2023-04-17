@@ -56,17 +56,10 @@ export class StartGameGateway {
       throw new UnauthorizedException(GameSessionError.cantStartGame);
     }
 
-    try {
-      await this.checkGameOnChain(
-        gameSession.gameBoardObjectId,
-        player.address,
-      );
-    } catch (error) {
-      await this.blockchainQueryService.retry<true>(
-        this.checkGameOnChain.bind(this),
-        [gameSession.gameBoardObjectId, player.address],
-      );
-    }
+    await this.blockchainQueryService.retry<true>(
+      this.checkGameOnChain.bind(this),
+      [gameSession.gameBoardObjectId, player.address],
+    );
 
     await this.roomService.updateRoomStatus(player.roomId, 'playing');
 

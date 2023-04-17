@@ -31,15 +31,19 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
   ) {}
   @UsePipes(validationPipeConfig)
   async handleDisconnect(@ConnectedSocket() client: Socket) {
-    const player = await this.playerService.removePlayer(client.id);
-    const gameSession = await this.gameSessionService.removePlayer(
-      player.roomId,
-      client.id,
-    );
-    await this.memotestContractService.disconnectPlayer(
-      gameSession.gameBoardObjectId,
-      player.id,
-    );
-    this.server.to(player.roomId).emit('player-left', { id: player.id });
+    try {
+      const player = await this.playerService.removePlayer(client.id);
+      const gameSession = await this.gameSessionService.removePlayer(
+        player.roomId,
+        client.id,
+      );
+      await this.memotestContractService.disconnectPlayer(
+        gameSession.gameBoardObjectId,
+        player.id,
+      );
+      this.server.to(player.roomId).emit('player-left', { id: player.id });
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

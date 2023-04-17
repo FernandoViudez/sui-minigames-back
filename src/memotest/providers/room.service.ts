@@ -34,15 +34,18 @@ export class RoomService {
     const rooms: Room[] = await this.getAllRooms();
     this.server.emit(
       'rooms',
-      JSON.stringify(rooms.filter((room) => room.status == 'waiting')),
+      JSON.stringify(
+        rooms.filter((room) => room.status == 'waiting' && !room.isPrivate),
+      ),
     );
   }
 
   private async getAllRooms(): Promise<Room[]> {
-    const rooms: Room[] = JSON.parse(
-      await this.cacheManager.get(this.REDIS_KEY),
-    );
-    return rooms;
+    let rooms = await this.cacheManager.get<string | undefined>(this.REDIS_KEY);
+    if (!rooms) {
+      rooms = '[]';
+    }
+    return JSON.parse(rooms);
   }
 
   async getRoomById(roomId: string): Promise<{ room: Room; idx: number }> {
@@ -58,10 +61,7 @@ export class RoomService {
   }
 
   async addRoom(room: Room) {
-    let rooms = await this.getAllRooms();
-    if (!rooms) {
-      rooms = [];
-    }
+    const rooms = await this.getAllRooms();
     rooms.push(room);
     await this.cacheManager.set(this.REDIS_KEY, JSON.stringify(rooms));
     await this.getPublicRooms();

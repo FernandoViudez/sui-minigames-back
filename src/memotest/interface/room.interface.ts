@@ -3,4 +3,5 @@ export interface Room {
   code: string;
   owner: string;
   status: string;
+  isPrivate: boolean;
 }
