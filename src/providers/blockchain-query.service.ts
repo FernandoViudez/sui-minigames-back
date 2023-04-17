@@ -51,4 +51,12 @@ export class BlockchainQueryService {
       throw new InternalServerErrorException(error);
     }
   }
+
+  async getBalanceFromAddress(address: string) {
+    const response = await this.provider.getBalance({
+      owner: address,
+      coinType: '0x2::sui::SUI',
+    });
+    return response.totalBalance;
+  }
 }

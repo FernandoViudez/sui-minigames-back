@@ -5,3 +5,7 @@ export interface Room {
   status: string;
   isPrivate: boolean;
 }
+
+export interface RoomResponse extends Room {
+  playersInRoom: number;
+}
