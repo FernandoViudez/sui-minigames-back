@@ -84,10 +84,12 @@ export class JoinRoomGateway {
       sender,
       player.fields.id,
     );
+    await this.gameSessionService.addPlayer(client.id, data.roomId);
 
     client.join(data.roomId);
     this.server.to(data.roomId).emit('player-joined', {
       id: player.fields.id,
+      address: player.fields.addr,
     });
   }
 

@@ -21,6 +21,12 @@ export class GameSessionService {
     await this.cacheManager.set(roomId, JSON.stringify(gameSession));
   }
 
+  async addPlayer(socketId: string, roomId: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.players.push(socketId);
+    await this.updateGameSession(roomId, gameSession);
+  }
+
   async getGameSessionFromRoomId(roomId: string) {
     const gameSessionString = await this.cacheManager.get<string | undefined>(
       roomId,

@@ -16,7 +16,8 @@ import { environment } from '../../environment/environment';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { GameBoardStatus } from '../interface/game-board.interface';
-import { Room } from '../interface/room.interface';
+import { Room, RoomResponse } from '../interface/room.interface';
+import { GameSessionService } from '../providers/game-session.service';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
@@ -27,17 +28,25 @@ export class RoomService {
   @WebSocketServer()
   server: Server;
   private readonly REDIS_KEY = 'memotest-rooms';
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly gameSessionService: GameSessionService,
+  ) {}
 
   @SubscribeMessage('get-rooms')
   async getPublicRooms(): Promise<void> {
-    const rooms: Room[] = await this.getAllRooms();
-    this.server.emit(
-      'rooms',
-      JSON.stringify(
-        rooms.filter((room) => room.status == 'waiting' && !room.isPrivate),
-      ),
-    );
+    let rooms: Room[] = await this.getAllRooms();
+    rooms = rooms.filter((room) => room.status == 'waiting' && !room.isPrivate);
+    for (let i = 0; i < rooms.length; i++) {
+      const room = rooms[i];
+      const gameSession =
+        await this.gameSessionService.getGameSessionFromRoomId(room.id);
+      rooms[i] = {
+        ...room,
+        playersInRoom: gameSession.players.length,
+      } as RoomResponse;
+    }
+    this.server.emit('rooms', JSON.stringify(rooms));
   }
 
   private async getAllRooms(): Promise<Room[]> {
@@ -64,7 +73,9 @@ export class RoomService {
     const rooms = await this.getAllRooms();
     rooms.push(room);
     await this.cacheManager.set(this.REDIS_KEY, JSON.stringify(rooms));
-    await this.getPublicRooms();
+    if (!room.isPrivate) {
+      await this.getPublicRooms();
+    }
   }
 
   async updateRoomStatus(roomId: string, newStatus: GameBoardStatus) {
@@ -77,6 +88,8 @@ export class RoomService {
     const rooms = await this.getAllRooms();
     rooms[idx] = room;
     await this.cacheManager.set(this.REDIS_KEY, JSON.stringify(rooms));
-    await this.getPublicRooms();
+    if (!room.isPrivate) {
+      await this.getPublicRooms();
+    }
   }
 }

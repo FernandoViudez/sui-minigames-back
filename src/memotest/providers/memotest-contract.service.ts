@@ -15,6 +15,13 @@ export class MemotestContractService {
     this.signer = new RawSigner(this.keypair, blockchainQueryService.provider);
   }
 
+  private async setBudget() {
+    const totBalance = await this.blockchainQueryService.getBalanceFromAddress(
+      this.keypair.getPublicKey().toSuiAddress(),
+    );
+    return Number(totBalance) - 100000;
+  }
+
   async updateCard(
     gameBoardObjectId: string,
     cardId: CardId,
@@ -34,7 +41,7 @@ export class MemotestContractService {
         tx.pure(newImage),
       ],
     });
-    tx.setGasBudget(10000);
+    tx.setGasBudget(await this.setBudget());
     await this.signer.signAndExecuteTransactionBlock({
       transactionBlock: tx,
     });
@@ -46,7 +53,7 @@ export class MemotestContractService {
       target: `${environment.memotest.packageObjectId}::memotest::disconnect_player`,
       arguments: [tx.pure(gameBoardObjectId), tx.pure(playerId)],
     });
-    tx.setGasBudget(10000);
+    tx.setGasBudget(await this.setBudget());
     await this.signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
   }
 }
