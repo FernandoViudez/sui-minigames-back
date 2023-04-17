@@ -1,4 +1,4 @@
-import { IsString, IsDefined } from 'class-validator';
+import { IsString, IsDefined, IsBoolean } from 'class-validator';
 
 export class CreateRoomDto {
   @IsString()
@@ -10,4 +10,7 @@ export class CreateRoomDto {
   @IsString()
   @IsDefined()
   readonly gameBoardObjectId: string;
+  @IsBoolean()
+  @IsDefined()
+  readonly isPrivate: boolean;
 }

@@ -1,10 +1,5 @@
 /* eslint-disable prettier/prettier */
-import {
-  BadRequestException,
-  CACHE_MANAGER,
-  Inject,
-  UsePipes,
-} from '@nestjs/common';
+import { BadRequestException, UsePipes } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -16,14 +11,15 @@ import { CreateRoomDto } from '../dto/create-room.dto';
 import { Socket } from 'socket.io';
 import { SuiUtils } from '../../_utils/sui.utils';
 import { SocketUtils } from '../../_utils/socket.utils';
-import { Cache } from 'cache-manager';
-import { GameSession } from '../type/game-session.type';
 import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { GeneralError } from '../errors/general.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { UseFilters } from '@nestjs/common/decorators';
 import { Namespace } from '../../_type/socket-namespaces.type';
+import { RoomService } from './room.service';
+import { GameSessionService } from './game-session.service';
+import { PlayerService } from './player.service';
 
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
@@ -31,7 +27,11 @@ import { Namespace } from '../../_type/socket-namespaces.type';
   namespace: Namespace.memotest,
 })
 export class CreateRoomGateway {
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  constructor(
+    private readonly roomService: RoomService,
+    private readonly gameSessionService: GameSessionService,
+    private readonly playerService: PlayerService,
+  ) {}
   @UsePipes(validationPipeConfig)
   @SubscribeMessage('create')
   async onCreateRoom(
@@ -46,23 +46,22 @@ export class CreateRoomGateway {
     if (!sender) {
       throw new BadRequestException(GeneralError.invalidSignature);
     }
+
     const roomId = SocketUtils.room.createRandomId();
-    const gameSession = new GameSession();
-    gameSession.creator = sender;
-    gameSession.currentTurn = {
-      cardsTurnedOver: [],
-    };
-    gameSession.gameBoardObjectId = data.gameBoardObjectId;
-    gameSession.players = [
-      {
-        address: sender,
-        id: 1,
-        socketId: client.id,
-      },
-    ];
-    gameSession.cardsImage = environment.memotest.cardsImage;
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
-    await this.cacheManager.set('1', roomId);
+    await this.playerService.saveNewPlayer(roomId, client.id, sender, 1);
+    await this.gameSessionService.saveNewGame(
+      data.gameBoardObjectId,
+      client.id,
+      roomId,
+    );
+    await this.roomService.addRoom({
+      code: roomId + ':' + data.gameBoardObjectId,
+      id: roomId,
+      owner: sender,
+      status: 'waiting',
+      isPrivate: data.isPrivate,
+    });
+
     client.join(roomId);
     client.emit('room-created', {
       roomId,
