@@ -101,7 +101,7 @@ export class JoinRoomGateway {
       gameBoardObjectId,
     );
     const player = gameBoard.players.find(
-      (player) => player.fields.addr == sender,
+      (player) => player.fields.addr == sender && player.fields.can_play,
     );
     if (!player) {
       throw new UnauthorizedException(GameBoardError.playerNotFound);
