@@ -7,6 +7,7 @@ export const environment = {
   },
   sockets: {
     port: Number(process.env.GATEWAY_PORT),
+    maxListeners: Number(process.env.MAX_SOCKET_LISTENERS),
   },
   memotest: {
     cardsImage: JSON.parse(process.env.MEMOTEST_CARDS_IMAGE || '[]'),
