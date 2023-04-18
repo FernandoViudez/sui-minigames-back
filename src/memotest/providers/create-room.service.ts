@@ -54,17 +54,16 @@ export class CreateRoomGateway {
       client.id,
       roomId,
     );
-    await this.roomService.addRoom({
+    const room = {
       code: roomId + ':' + data.gameBoardObjectId,
       id: roomId,
       owner: sender,
       status: 'waiting',
       isPrivate: data.isPrivate,
-    });
+    };
+    await this.roomService.addRoom(room);
 
     client.join(roomId);
-    client.emit('room-created', {
-      roomId,
-    });
+    client.emit('room-created', room);
   }
 }

@@ -1,8 +1,11 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-var-requires */
 require('dotenv').config();
+import { environment } from './environment/environment';
+require('events').EventEmitter.defaultMaxListeners =
+  environment.sockets.maxListeners;
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { environment } from './environment/environment';
 import { validationPipeConfig } from './_config/validation-pipe.config';
 
 async function bootstrap() {
