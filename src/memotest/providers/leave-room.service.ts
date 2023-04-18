@@ -41,7 +41,9 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
         gameSession.gameBoardObjectId,
         player.id,
       );
-      this.server.to(player.roomId).emit('player-left', { id: player.id });
+      this.server
+        .to(player.roomId)
+        .emit('player-left', { id: player.id, address: player.address });
     } catch (error) {}
   }
 }
