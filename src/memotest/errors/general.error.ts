@@ -6,4 +6,8 @@ export const GeneralError: WsError = {
     message: 'You cant turn over the same card twice',
     code: 2,
   },
+  cantTurnOver: {
+    message: 'You cant turn over three cards',
+    code: 23,
+  },
 };

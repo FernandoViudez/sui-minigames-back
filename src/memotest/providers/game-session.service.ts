@@ -51,16 +51,6 @@ export class GameSessionService {
     return gameSession;
   }
 
-  async processPlayingCard(roomId: string, positionSent: number) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    if (!gameSession.playingCardPosition) {
-      gameSession.playingCardPosition = positionSent;
-    } else {
-      gameSession.playingCardPosition = 0;
-    }
-    await this.updateGameSession(roomId, gameSession);
-  }
-
   async getRandomImage(roomId: string) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     const idx = Math.floor(Math.random() * gameSession.cardsImage.length);
@@ -68,6 +58,25 @@ export class GameSessionService {
     gameSession.cardsImage.splice(idx, 1);
     await this.updateGameSession(roomId, gameSession);
     return image;
+  }
+
+  async processCurrentTurn(
+    roomId: string,
+    card: { position: number; id: number },
+    playerId: number,
+  ) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards.push(card);
+    gameSession.currentTurn.playerId = playerId;
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async clearCurrentTurn(roomId: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn = {
+      cards: [],
+    };
+    await this.updateGameSession(roomId, gameSession);
   }
 
   async updateGameSession(roomId: string, gameSession: GameSession) {
