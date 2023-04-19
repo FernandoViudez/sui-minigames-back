@@ -12,4 +12,8 @@ export const GameBoardError: WsError = {
   },
   playerNotFound: { message: 'Player not found in game board', code: 9 },
   incorrectTurn: { message: 'Incorrect turn', code: 10 },
+  invalidCardTimes: {
+    message: 'You need to turn over two cards in order to change your turn',
+    code: 24,
+  },
 };

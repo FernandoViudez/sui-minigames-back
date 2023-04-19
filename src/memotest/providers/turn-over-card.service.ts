@@ -53,17 +53,20 @@ export class TurnOverCardGateway {
     const gameSession: GameSession =
       await this.gameSessionService.getGameSessionFromRoomId(player.roomId);
 
+    if (gameSession.currentTurn.cards.length == 2) {
+      throw new BadRequestException(GeneralError.cantTurnOver);
+    }
+
     const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
       this.checkTurn.bind(this),
-      [gameSession, player.id],
-      true,
+      [gameSession, player.id, false],
     )) as GameBoard;
 
     let currentCard = this.getCardFromPosition(gameBoard, data.position);
 
     if (
-      gameSession.playingCardPosition &&
-      gameSession.playingCardPosition == data.position
+      gameSession.currentTurn.cards.length &&
+      gameSession.currentTurn.cards[0].position == data.position
     ) {
       throw new BadRequestException(
         GeneralError.positionAlreadyChosenInSameTurn,
@@ -94,21 +97,53 @@ export class TurnOverCardGateway {
       image: currentCard.fields.image,
     });
 
-    if (gameSession.playingCardPosition) {
-      this.server.to(player.roomId).emit('turn-changed');
-    }
-
-    await this.gameSessionService.processPlayingCard(
+    await this.gameSessionService.processCurrentTurn(
       player.roomId,
-      data.position,
+      {
+        position: data.position,
+        id: currentCard.fields.id,
+      },
+      player.id,
     );
   }
 
-  private async checkTurn(gameSession: GameSession, playerId: number) {
+  @SubscribeMessage('change-turn')
+  async changeTurn(@ConnectedSocket() client: Socket) {
+    const player = await this.playerService.getPlayerFromSocket(client.id);
+    const gameSession = await this.gameSessionService.getGameSessionFromRoomId(
+      player.roomId,
+    );
+    if (gameSession.currentTurn.cards.length != 2) {
+      throw new UnauthorizedException(GameBoardError.invalidCardTimes);
+    }
+    if (gameSession.currentTurn.playerId != player.id) {
+      throw new UnauthorizedException(GameBoardError.incorrectTurn);
+    }
+    await this.gameSessionService.clearCurrentTurn(player.roomId);
+    const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
+      this.checkTurn.bind(this),
+      [gameSession, player.id, true],
+    )) as GameBoard;
+    this.server.to(player.roomId).emit('turn-changed', {
+      whoPlays: gameBoard.who_plays,
+    });
+  }
+
+  private async checkTurn(
+    gameSession: GameSession,
+    playerId: number,
+    playerIdIsOldTurn: boolean,
+  ) {
     const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
       gameSession.gameBoardObjectId,
     );
-    if (gameBoard.who_plays != playerId) {
+    let shouldFailWhen: boolean;
+    if (playerIdIsOldTurn) {
+      shouldFailWhen = gameBoard.who_plays == playerId;
+    } else {
+      shouldFailWhen = gameBoard.who_plays != playerId;
+    }
+    if (shouldFailWhen) {
       throw new UnauthorizedException(GameBoardError.incorrectTurn);
     }
     return gameBoard;
