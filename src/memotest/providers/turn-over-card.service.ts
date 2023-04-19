@@ -54,7 +54,7 @@ export class TurnOverCardGateway {
       await this.gameSessionService.getGameSessionFromRoomId(player.roomId);
 
     const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
-      this.checkTurn,
+      this.checkTurn.bind(this),
       [gameSession, client.id],
       true,
     )) as GameBoard;
