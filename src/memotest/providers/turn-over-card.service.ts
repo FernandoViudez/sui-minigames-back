@@ -55,7 +55,7 @@ export class TurnOverCardGateway {
 
     const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
       this.checkTurn.bind(this),
-      [gameSession, client.id],
+      [gameSession, player.id],
       true,
     )) as GameBoard;
 
@@ -104,19 +104,14 @@ export class TurnOverCardGateway {
     );
   }
 
-  private async checkTurn(gameSession: GameSession, socketId: string) {
+  private async checkTurn(gameSession: GameSession, playerId: number) {
     const gameBoard = await this.blockchainQueryService.getObject<GameBoard>(
       gameSession.gameBoardObjectId,
     );
-    this.checkCurrentTurn(gameSession.players, gameBoard.who_plays, socketId);
-    return gameBoard;
-  }
-
-  private checkCurrentTurn(players: any[], whoPlays: number, socketId: string) {
-    const sender = players.find((player) => player.socketId == socketId);
-    if (whoPlays != sender.id) {
+    if (gameBoard.who_plays != playerId) {
       throw new UnauthorizedException(GameBoardError.incorrectTurn);
     }
+    return gameBoard;
   }
 
   private getCardFromPosition(gameBoard: GameBoard, position: number) {
