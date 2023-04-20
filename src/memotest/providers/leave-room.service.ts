@@ -35,7 +35,7 @@ export class LeaveRoomGateway implements OnGatewayDisconnect {
       const player = await this.playerService.removePlayer(client.id);
       const gameSession = await this.gameSessionService.removePlayer(
         player.roomId,
-        client.id,
+        player,
       );
       await this.memotestContractService.disconnectPlayer(
         gameSession.gameBoardObjectId,

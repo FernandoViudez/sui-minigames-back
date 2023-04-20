@@ -13,6 +13,7 @@ export class GameSession {
   } = {
     cards: [],
   };
+  lastTurnDate?: number;
   constructor(gameBoardObjectId: string, player: string) {
     this.gameBoardObjectId = gameBoardObjectId;
     this.players.push(player);
