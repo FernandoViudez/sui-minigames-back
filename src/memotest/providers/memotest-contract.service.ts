@@ -56,4 +56,14 @@ export class MemotestContractService {
     tx.setGasBudget(await this.setBudget());
     await this.signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
   }
+
+  async changeTurnByForce(gameBoardObjectId: string) {
+    const tx = new TransactionBlock();
+    tx.moveCall({
+      target: `${environment.memotest.packageObjectId}::memotest::change_turn`,
+      arguments: [tx.pure(gameBoardObjectId)],
+    });
+    tx.setGasBudget(await this.setBudget());
+    await this.signer.signAndExecuteTransactionBlock({ transactionBlock: tx });
+  }
 }

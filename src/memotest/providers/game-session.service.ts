@@ -8,6 +8,7 @@ import {
 import { Cache } from 'cache-manager';
 import { GameSessionError } from '../errors/game-session.error';
 import { GameSession } from '../type/game-session.type';
+import { Player } from '../type/player.class';
 
 @Injectable()
 export class GameSessionService {
@@ -38,13 +39,16 @@ export class GameSessionService {
     return gameSession;
   }
 
-  async removePlayer(roomId: string, socketId: string) {
+  async removePlayer(roomId: string, player: Player) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     const playerIdx = gameSession.players.findIndex(
-      (player) => player == socketId,
+      (playerSocket) => playerSocket == player.socketId,
     );
     if (playerIdx < 0) {
       throw new NotFoundException(GameSessionError.playerNotFound);
+    }
+    if (gameSession.currentTurn.playerId == player.id) {
+      await this.resetCurrentTurn(roomId);
     }
     gameSession.players.splice(playerIdx);
     await this.cacheManager.set(roomId, JSON.stringify(gameSession));
@@ -60,6 +64,12 @@ export class GameSessionService {
     return image;
   }
 
+  async setPlayer(roomId: string, playerId: number) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.playerId = playerId;
+    await this.updateGameSession(roomId, gameSession);
+  }
+
   async processCurrentTurn(
     roomId: string,
     card: { position: number; id: number },
@@ -71,11 +81,16 @@ export class GameSessionService {
     await this.updateGameSession(roomId, gameSession);
   }
 
-  async clearCurrentTurn(roomId: string) {
+  async resetCurrentTurn(roomId: string) {
+    await this.updateGameTimeOut(roomId);
     const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn = {
-      cards: [],
-    };
+    gameSession.currentTurn.cards = [];
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async updateGameTimeOut(roomId: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.lastTurnDate = Date.now();
     await this.updateGameSession(roomId, gameSession);
   }
 

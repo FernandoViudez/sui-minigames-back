@@ -62,6 +62,8 @@ export class StartGameGateway {
     );
 
     await this.roomService.updateRoomStatus(player.roomId, 'playing');
+    await this.gameSessionService.updateGameTimeOut(player.roomId);
+    await this.gameSessionService.setPlayer(player.roomId, player.id);
 
     this.server.to(player.roomId).emit('game-started');
   }

@@ -29,6 +29,7 @@ import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { PlayerService } from './player.service';
 import { GameSessionService } from './game-session.service';
+import { Player } from '../type/player.class';
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,
@@ -113,19 +114,60 @@ export class TurnOverCardGateway {
     const gameSession = await this.gameSessionService.getGameSessionFromRoomId(
       player.roomId,
     );
+
     if (gameSession.currentTurn.cards.length != 2) {
       throw new UnauthorizedException(GameBoardError.invalidCardTimes);
     }
+
     if (gameSession.currentTurn.playerId != player.id) {
       throw new UnauthorizedException(GameBoardError.incorrectTurn);
     }
-    await this.gameSessionService.clearCurrentTurn(player.roomId);
+
+    await this.gameSessionService.resetCurrentTurn(player.roomId);
+    await this.waitTurnFromChainAndEmit(player.id, gameSession, player);
+  }
+
+  @SubscribeMessage('request-time-out')
+  async requestChangeTurn(@ConnectedSocket() client: Socket) {
+    const player = await this.playerService.getPlayerFromSocket(client.id);
+    const gameSession = await this.gameSessionService.getGameSessionFromRoomId(
+      player.roomId,
+    );
+
+    const msSinceLastTurned = Date.now() - gameSession.lastTurnDate;
+    if (msSinceLastTurned < environment.memotest.playerTurnDuration) {
+      return;
+    }
+
+    await this.gameSessionService.resetCurrentTurn(player.roomId);
+
+    await this.memotestContractService.changeTurnByForce(
+      gameSession.gameBoardObjectId,
+    );
+
+    await this.waitTurnFromChainAndEmit(
+      gameSession.currentTurn.playerId,
+      gameSession,
+      player,
+    );
+  }
+
+  private async waitTurnFromChainAndEmit(
+    oldPlayerIdTurn: number,
+    gameSession: GameSession,
+    player: Player,
+  ) {
     const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
       this.checkTurn.bind(this),
-      [gameSession, player.id, true],
+      [gameSession, oldPlayerIdTurn, true],
     )) as GameBoard;
+    await this.gameSessionService.setPlayer(player.roomId, gameBoard.who_plays);
     this.server.to(player.roomId).emit('turn-changed', {
       whoPlays: gameBoard.who_plays,
+      playerTurnDuration: environment.memotest.playerTurnDuration,
+      lastTurnDate: (
+        await this.gameSessionService.getGameSessionFromRoomId(player.roomId)
+      ).lastTurnDate,
     });
   }
 

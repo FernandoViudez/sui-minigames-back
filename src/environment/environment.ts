@@ -15,5 +15,6 @@ export const environment = {
     packageObjectId: process.env.PACKAGE_OBJECT_ID,
     configObjectId: process.env.CONFIG_OBJECT_ID,
     matchDuration: Number(process.env.MATCH_DURATION),
+    playerTurnDuration: Number(process.env.PLAYER_TURN_DURATION),
   },
 };
