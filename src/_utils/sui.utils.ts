@@ -1,9 +1,11 @@
 import {
-  fromB64,
   fromSerializedSignature,
   Ed25519PublicKey,
+  messageWithIntent,
+  IntentScope,
 } from '@mysten/sui.js';
 import * as tweetnacl from 'tweetnacl';
+import { blake2b } from '@noble/hashes/blake2b';
 
 export const SuiUtils = {
   signature: {
@@ -23,11 +25,19 @@ export const SuiUtils = {
         );
         const address = publicKey.toSuiAddress();
         const messageBytes = new TextEncoder().encode(address + ':' + socketId);
-        const isValid = tweetnacl.sign.detached.verify(
+
+        const signature = fromSerializedSignature(signatureB64);
+        const message = messageWithIntent(
+          IntentScope.PersonalMessage,
           messageBytes,
-          fromB64(signatureB64),
+        );
+
+        const isValid = tweetnacl.sign.detached.verify(
+          blake2b(message, { dkLen: 32 }),
+          signature.signature,
           publicKey.toBytes(),
         );
+
         if (isValid) {
           return address;
         }
