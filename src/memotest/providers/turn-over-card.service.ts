@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import {
   BadRequestException,
+  InternalServerErrorException,
   UnauthorizedException,
   UseFilters,
   UsePipes,
@@ -58,13 +59,6 @@ export class TurnOverCardGateway {
       throw new BadRequestException(GeneralError.cantTurnOver);
     }
 
-    const gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
-      this.checkTurn.bind(this),
-      [gameSession, player.id, false],
-    )) as GameBoard;
-
-    let currentCard = this.getCardFromPosition(gameBoard, data.position);
-
     if (
       gameSession.currentTurn.cards.length &&
       gameSession.currentTurn.cards[0].position == data.position
@@ -74,6 +68,27 @@ export class TurnOverCardGateway {
       );
     }
 
+    await this.gameSessionService.addCard(player.roomId, {
+      position: data.position,
+      id: -1,
+    });
+
+    let gameBoard;
+    try {
+      gameBoard = (await this.blockchainQueryService.retry<GameBoard>(
+        this.checkTurn.bind(this),
+        [gameSession, player.id, false],
+      )) as GameBoard;
+    } catch (error) {
+      this.gameSessionService.removeCardByPosition(
+        player.roomId,
+        data.position,
+      );
+      throw error;
+    }
+
+    let currentCard = this.getCardFromPosition(gameBoard, data.position);
+
     if (!currentCard) {
       currentCard = this.selectRandomCard(gameBoard.cards);
       if (!currentCard.fields.image) {
@@ -82,13 +97,21 @@ export class TurnOverCardGateway {
         );
         currentCard.fields.image = image;
       }
-      await this.memotestContractService.updateCard(
-        gameSession.gameBoardObjectId,
-        currentCard.fields.id,
-        data.position,
-        currentCard.fields.location != 0,
-        currentCard.fields.image,
-      );
+      try {
+        await this.memotestContractService.updateCard(
+          gameSession.gameBoardObjectId,
+          currentCard.fields.id,
+          data.position,
+          currentCard.fields.location != 0,
+          currentCard.fields.image,
+        );
+      } catch (error) {
+        return await this.handleUpdateCardError(
+          player.roomId,
+          currentCard.fields.image,
+          data.position,
+        );
+      }
     }
 
     this.server.to(player.roomId).emit('card-turned-over', {
@@ -109,6 +132,18 @@ export class TurnOverCardGateway {
         id: currentCard.fields.id,
       },
       player.id,
+    );
+  }
+
+  private async handleUpdateCardError(
+    roomId: string,
+    imageSelected: string,
+    cardPosition: number,
+  ) {
+    await this.gameSessionService.addNewImage(roomId, imageSelected);
+    await this.gameSessionService.removeCardByPosition(roomId, cardPosition);
+    throw new InternalServerErrorException(
+      GeneralError.internalSuiErrorUpdatingCard,
     );
   }
 

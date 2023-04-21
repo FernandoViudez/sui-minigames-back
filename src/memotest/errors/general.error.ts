@@ -10,4 +10,8 @@ export const GeneralError: WsError = {
     message: 'You cant turn over three cards',
     code: 23,
   },
+  internalSuiErrorUpdatingCard: {
+    message: 'Internal SUI error, please try to flip the card again.',
+    code: 25,
+  },
 };
