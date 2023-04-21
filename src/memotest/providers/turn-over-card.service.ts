@@ -76,14 +76,18 @@ export class TurnOverCardGateway {
 
     if (!currentCard) {
       currentCard = this.selectRandomCard(gameBoard.cards);
-      const image = await this.gameSessionService.getRandomImage(player.roomId);
-      currentCard.fields.image = image;
+      if (!currentCard.fields.image) {
+        const image = await this.gameSessionService.getRandomImage(
+          player.roomId,
+        );
+        currentCard.fields.image = image;
+      }
       await this.memotestContractService.updateCard(
         gameSession.gameBoardObjectId,
         currentCard.fields.id,
         data.position,
         currentCard.fields.location != 0,
-        image,
+        currentCard.fields.image,
       );
     }
 
