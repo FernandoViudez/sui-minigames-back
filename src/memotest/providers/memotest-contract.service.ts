@@ -19,7 +19,7 @@ export class MemotestContractService {
     const totBalance = await this.blockchainQueryService.getBalanceFromAddress(
       this.keypair.getPublicKey().toSuiAddress(),
     );
-    return Number(totBalance) - 100000;
+    return Number(totBalance) / 2;
   }
 
   async updateCard(
