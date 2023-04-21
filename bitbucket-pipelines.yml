@@ -19,9 +19,9 @@ pipelines:
             - echo 'echo "|| PRINT CURRENT STATUS~~"' >> server-commands.sh
             - echo 'git status' >> server-commands.sh
             - echo 'echo "|| UPDATE NODE MODULES DEPENDENCIES~~"' >> server-commands.sh
-            - echo 'yarn install' >> server-commands.sh
+            - echo 'npm i' >> server-commands.sh
             - echo 'echo "|| REBUILD API~~"' >> server-commands.sh
-            - echo 'yarn build' >> server-commands.sh
+            - echo 'npm run build' >> server-commands.sh
             - echo 'echo "|| EMPTY PM 2 LOG~~"' >> server-commands.sh
             - echo 'pm2 flush' >> server-commands.sh
             - echo 'echo "|| EMPTY PM 2 API LOGS~~"' >> server-commands.sh
