@@ -1,0 +1,36 @@
+image: python:3.5.1
+
+pipelines:
+  branches:
+    dev:
+      - step:
+          name: Deploy to DEV server
+          script:
+            - mkdir -p ~/.ssh
+            - cat my_known_hosts >> ~/.ssh/known_hosts
+            - (umask  077 ; echo $MY_DEV_SSH_KEY | base64 -di > ~/.ssh/id_rsa)
+            - touch server-commands.sh
+            - echo 'echo "|| GOTO API FOLDER~~"' >> server-commands.sh
+            - echo 'cd /var/www/dev-games-api.indelve.com' >> server-commands.sh
+            - echo 'echo "|| CLEAN UP POSSIBLE IN SERVER CHANGES~~"' >> server-commands.sh
+            - echo 'git checkout -- .' >> server-commands.sh
+            - echo 'echo "|| PULL LAST CHANGES FROM THE REPOSITORY~~"' >> server-commands.sh
+            - echo 'git pull' >> server-commands.sh
+            - echo 'echo "|| PRINT CURRENT STATUS~~"' >> server-commands.sh
+            - echo 'git status' >> server-commands.sh
+            - echo 'echo "|| UPDATE NODE MODULES DEPENDENCIES~~"' >> server-commands.sh
+            - echo 'yarn install' >> server-commands.sh
+            - echo 'echo "|| REBUILD API~~"' >> server-commands.sh
+            - echo 'yarn build' >> server-commands.sh
+            - echo 'echo "|| EMPTY PM 2 LOG~~"' >> server-commands.sh
+            - echo 'pm2 flush' >> server-commands.sh
+            - echo 'echo "|| EMPTY PM 2 API LOGS~~"' >> server-commands.sh
+            - echo 'pm2 flush indelve-games' >> server-commands.sh
+            - echo 'echo "|| RESTART API WITH NEW CHANGES~~"' >> server-commands.sh
+            - echo 'pm2 restart ecosystem.config.js' >> server-commands.sh
+            - echo 'echo "|| WAIT 5 SC~~"' >> server-commands.sh
+            - echo 'sleep 5' >> server-commands.sh
+            - echo 'echo "|| PRINT API STATUS~~"' >> server-commands.sh
+            - echo 'pm2 status' >> server-commands.sh
+            - ssh -i ~/.ssh/id_rsa ubuntu@34.217.79.242 'bash -s' < server-commands.sh
+            - echo 'deployed correctly'
