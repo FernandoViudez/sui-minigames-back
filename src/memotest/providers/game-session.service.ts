@@ -64,6 +64,12 @@ export class GameSessionService {
     return image;
   }
 
+  async addNewImage(roomId: string, image: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.cardsImage.push(image);
+    await this.updateGameSession(roomId, gameSession);
+  }
+
   async setPlayer(roomId: string, playerId: number) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     gameSession.currentTurn.playerId = playerId;
@@ -76,8 +82,26 @@ export class GameSessionService {
     playerId: number,
   ) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards.push(card);
+    const cardIdx = gameSession.currentTurn.cards.findIndex(
+      (_card) => _card.position == card.position,
+    );
+    gameSession.currentTurn.cards[cardIdx].id = card.id;
     gameSession.currentTurn.playerId = playerId;
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async addCard(roomId: string, card: { position: number; id: number }) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards.push(card);
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async removeCardByPosition(roomId: string, position: number) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    const cardIdx = gameSession.currentTurn.cards.findIndex(
+      (card) => card.position == position,
+    );
+    gameSession.currentTurn.cards.splice(cardIdx, 1);
     await this.updateGameSession(roomId, gameSession);
   }
 
