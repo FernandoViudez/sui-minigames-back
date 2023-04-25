@@ -99,23 +99,30 @@ export class GameSessionService {
       gameSession.currentTurn.cards.length &&
       gameSession.currentTurn.cards.length >= 2
     ) {
-      console.log('Cards array full');
       return false;
     }
     if (
       gameSession.currentTurn.cards.length &&
       gameSession.currentTurn.cards[0].position == positionSent
     ) {
-      console.log('Same position for one card');
       return false;
     }
     return true;
   }
 
-  async unFlipCard(roomId: string, image: string) {
+  async unFlipCard(
+    roomId: string,
+    cardPosition: number,
+    image: string | undefined,
+  ) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards.pop();
-    gameSession.cardsImage.push(image);
+    const idx = gameSession.currentTurn.cards.findIndex(
+      (card) => card.position == cardPosition,
+    );
+    gameSession.currentTurn.cards.splice(idx, 1);
+    if (image) {
+      gameSession.cardsImage.push(image);
+    }
     await this.updateGameSession(roomId, gameSession);
   }
 }

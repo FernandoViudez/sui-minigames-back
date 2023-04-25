@@ -70,13 +70,11 @@ export class TurnOverCardGateway {
     );
 
     let currentCard = this.getCardFromPosition(gameBoard, data.position);
-
+    let image;
     if (!currentCard) {
       currentCard = this.selectRandomCard(gameBoard.cards);
       if (!currentCard.fields.image) {
-        const image = await this.gameSessionService.getRandomImage(
-          player.roomId,
-        );
+        image = await this.gameSessionService.getRandomImage(player.roomId);
         currentCard.fields.image = image;
       }
       try {
@@ -89,10 +87,10 @@ export class TurnOverCardGateway {
           player.id,
         );
       } catch (error) {
-        console.log(error);
         return await this.handleUpdateCardError(
           player.roomId,
-          currentCard.fields.image,
+          data.position,
+          image,
         );
       }
     } else {
@@ -103,12 +101,13 @@ export class TurnOverCardGateway {
       });
     }
 
-    if (gameSession.currentTurn.cards.length == 2) {
-      console.log('subscribing...');
+    if (
+      (await this.gameSessionService.getGameSessionFromRoomId(player.roomId))
+        .currentTurn.cards.length == 2
+    ) {
       const subscriptionId = await this.blockchainQueryService.on(
         'TurnChanged',
         async () => {
-          console.log('TurnChanged emitted');
           await this.blockchainQueryService.unsubscribe(subscriptionId);
           await this.gameSessionService.updateTurn(player.roomId);
         },
@@ -116,8 +115,16 @@ export class TurnOverCardGateway {
     }
   }
 
-  private async handleUpdateCardError(roomId: string, imageSelected: string) {
-    await this.gameSessionService.unFlipCard(roomId, imageSelected);
+  private async handleUpdateCardError(
+    roomId: string,
+    positionSelected: number,
+    imageSelected: string | undefined,
+  ) {
+    await this.gameSessionService.unFlipCard(
+      roomId,
+      positionSelected,
+      imageSelected,
+    );
     throw new InternalServerErrorException(
       GeneralError.internalSuiErrorUpdatingCard,
     );
