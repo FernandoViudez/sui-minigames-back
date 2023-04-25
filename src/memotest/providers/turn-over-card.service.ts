@@ -132,10 +132,44 @@ export class TurnOverCardGateway {
 
   @SubscribeMessage('request-time-out')
   async requestChangeTurn(@ConnectedSocket() client: Socket) {
-    // get time from blockchain
-    // if date.now - timeFromBlockchain >= turnTimePerPlayer => can update
-    // game session -> updateTurn()
-    // otherwise, ignore
+    const player = await this.playerService.getPlayerFromSocket(client.id);
+    const gameSession = await this.gameSessionService.getGameSessionFromRoomId(
+      player.roomId,
+    );
+    if (!gameSession.currentTurn.forceUpdateAvailable) {
+      throw new InternalServerErrorException('Cant force update turn');
+    }
+
+    const timeSpendSinceLastTurnChanged =
+      Date.now() - gameSession.currentTurn.lastTurnDate;
+    if (
+      timeSpendSinceLastTurnChanged >= environment.memotest.playerTurnDuration
+    ) {
+      await this.gameSessionService.updateForceAvailable(player.roomId, false);
+      let subscriptionId;
+      try {
+        subscriptionId = await this.blockchainQueryService.on(
+          'TurnChanged',
+          async () => {
+            await this.blockchainQueryService.unsubscribe(subscriptionId);
+            await this.gameSessionService.updateTurn(player.roomId);
+            await this.gameSessionService.updateForceAvailable(
+              player.roomId,
+              true,
+            );
+          },
+        );
+        await this.memotestContractService.changeTurnByForce(
+          gameSession.gameBoardObjectId,
+        );
+      } catch (error) {
+        await this.blockchainQueryService.unsubscribe(subscriptionId);
+        return await this.gameSessionService.updateForceAvailable(
+          player.roomId,
+          true,
+        );
+      }
+    }
   }
 
   private getCardFromPosition(gameBoard: GameBoard, position: number) {

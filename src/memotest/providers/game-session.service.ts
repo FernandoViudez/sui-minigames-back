@@ -72,7 +72,7 @@ export class GameSessionService {
 
   async updateGameTimeOut(roomId: string) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.lastTurnDate = Date.now();
+    gameSession.currentTurn.lastTurnDate = Date.now();
     await this.updateGameSession(roomId, gameSession);
   }
 
@@ -83,6 +83,7 @@ export class GameSessionService {
   async updateTurn(roomId: string) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     gameSession.currentTurn.cards = [];
+    gameSession.currentTurn.lastTurnDate = Date.now();
     await this.updateGameSession(roomId, gameSession);
   }
 
@@ -90,6 +91,7 @@ export class GameSessionService {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     gameSession.currentTurn.cards.push(card);
     gameSession.currentTurn.playerId = playerId;
+    gameSession.currentTurn.lastTurnDate = Date.now();
     await this.updateGameSession(roomId, gameSession);
   }
 
@@ -123,6 +125,12 @@ export class GameSessionService {
     if (image) {
       gameSession.cardsImage.push(image);
     }
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async updateForceAvailable(roomId: string, isAvailable: boolean) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.forceUpdateAvailable = isAvailable;
     await this.updateGameSession(roomId, gameSession);
   }
 }
