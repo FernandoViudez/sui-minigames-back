@@ -28,6 +28,7 @@ export class MemotestContractService {
     newLocation: number,
     modifyPer: boolean,
     newImage: string,
+    playerId: number,
   ) {
     const tx = new TransactionBlock();
     tx.moveCall({
@@ -39,6 +40,7 @@ export class MemotestContractService {
         tx.pure(newLocation),
         tx.pure(modifyPer),
         tx.pure(newImage),
+        tx.pure(playerId),
       ],
     });
     tx.setGasBudget(await this.setBudget());

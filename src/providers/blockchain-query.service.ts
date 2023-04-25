@@ -1,4 +1,4 @@
-import { Connection, JsonRpcProvider } from '@mysten/sui.js';
+import { Connection, JsonRpcProvider, SuiEvent } from '@mysten/sui.js';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { environment } from '../environment/environment';
 
@@ -58,5 +58,31 @@ export class BlockchainQueryService {
       coinType: '0x2::sui::SUI',
     });
     return response.totalBalance;
+  }
+
+  async on<T>(eventName: string, cb: (args: T) => any) {
+    const subscriptionID = await this.provider.subscribeEvent({
+      filter: {
+        MoveModule: {
+          package: environment.memotest.packageObjectId,
+          module: 'memotest',
+        },
+      },
+      onMessage: (event: SuiEvent) => {
+        if (
+          event.type ==
+          environment.memotest.packageObjectId + '::memotest::' + eventName
+        ) {
+          cb(event.parsedJson as T);
+        }
+      },
+    });
+    return subscriptionID;
+  }
+
+  async unsubscribe(subscriptionId: number) {
+    await this.provider.unsubscribeEvent({
+      id: subscriptionId,
+    });
   }
 }

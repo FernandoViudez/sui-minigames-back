@@ -19,7 +19,7 @@ export class GameSessionService {
     roomId: string,
   ) {
     const gameSession = new GameSession(gameBoardObjectId, socketId);
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+    await this.updateGameSession(roomId, gameSession);
   }
 
   async addPlayer(socketId: string, roomId: string) {
@@ -47,11 +47,11 @@ export class GameSessionService {
     if (playerIdx < 0) {
       throw new NotFoundException(GameSessionError.playerNotFound);
     }
-    if (gameSession.currentTurn.playerId == player.id) {
-      await this.resetCurrentTurn(roomId);
-    }
     gameSession.players.splice(playerIdx);
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+    await this.updateGameSession(roomId, gameSession);
+    if (gameSession.currentTurn.playerId == player.id) {
+      await this.updateTurn(roomId);
+    }
     return gameSession;
   }
 
@@ -64,51 +64,9 @@ export class GameSessionService {
     return image;
   }
 
-  async addNewImage(roomId: string, image: string) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.cardsImage.push(image);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
   async setPlayer(roomId: string, playerId: number) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     gameSession.currentTurn.playerId = playerId;
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async processCurrentTurn(
-    roomId: string,
-    card: { position: number; id: number },
-    playerId: number,
-  ) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    const cardIdx = gameSession.currentTurn.cards.findIndex(
-      (_card) => _card.position == card.position,
-    );
-    gameSession.currentTurn.cards[cardIdx].id = card.id;
-    gameSession.currentTurn.playerId = playerId;
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async addCard(roomId: string, card: { position: number; id: number }) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards.push(card);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async removeCardByPosition(roomId: string, position: number) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    const cardIdx = gameSession.currentTurn.cards.findIndex(
-      (card) => card.position == position,
-    );
-    gameSession.currentTurn.cards.splice(cardIdx, 1);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async resetCurrentTurn(roomId: string) {
-    await this.updateGameTimeOut(roomId);
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards = [];
     await this.updateGameSession(roomId, gameSession);
   }
 
@@ -120,5 +78,44 @@ export class GameSessionService {
 
   async updateGameSession(roomId: string, gameSession: GameSession) {
     await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+  }
+
+  async updateTurn(roomId: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards = [];
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async flipCard(roomId: string, card: { position: number }, playerId: number) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards.push(card);
+    gameSession.currentTurn.playerId = playerId;
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async canFlipCard(roomId: string, positionSent: number): Promise<boolean> {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    if (
+      gameSession.currentTurn.cards.length &&
+      gameSession.currentTurn.cards.length >= 2
+    ) {
+      console.log('Cards array full');
+      return false;
+    }
+    if (
+      gameSession.currentTurn.cards.length &&
+      gameSession.currentTurn.cards[0].position == positionSent
+    ) {
+      console.log('Same position for one card');
+      return false;
+    }
+    return true;
+  }
+
+  async unFlipCard(roomId: string, image: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards.pop();
+    gameSession.cardsImage.push(image);
+    await this.updateGameSession(roomId, gameSession);
   }
 }

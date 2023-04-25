@@ -6,7 +6,6 @@ export class GameSession {
   cardsImage: string[] = environment.memotest.cardsImage;
   currentTurn: {
     cards: {
-      id: number;
       position: number;
     }[];
     playerId?: number;
