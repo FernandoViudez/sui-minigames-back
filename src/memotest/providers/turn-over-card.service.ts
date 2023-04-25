@@ -104,6 +104,7 @@ export class TurnOverCardGateway {
           data.position,
           currentCard.fields.location != 0,
           currentCard.fields.image,
+          player.id,
         );
       } catch (error) {
         return await this.handleUpdateCardError(
