@@ -2,6 +2,7 @@
 import {
   InternalServerErrorException,
   UseFilters,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import {
@@ -27,6 +28,9 @@ import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { PlayerService } from './player.service';
 import { GameSessionService } from './game-session.service';
+import { WsThrottlerGuard } from '../../providers/ws-throttler.service';
+
+@UseGuards(WsThrottlerGuard)
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,
