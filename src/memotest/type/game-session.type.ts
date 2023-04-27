@@ -6,14 +6,15 @@ export class GameSession {
   cardsImage: string[] = environment.memotest.cardsImage;
   currentTurn: {
     cards: {
-      id: number;
       position: number;
     }[];
     playerId?: number;
+    lastTurnDate?: number;
+    forceUpdateAvailable: boolean;
   } = {
     cards: [],
+    forceUpdateAvailable: true,
   };
-  lastTurnDate?: number;
   constructor(gameBoardObjectId: string, player: string) {
     this.gameBoardObjectId = gameBoardObjectId;
     this.players.push(player);

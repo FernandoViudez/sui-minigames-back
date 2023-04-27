@@ -19,7 +19,7 @@ export class GameSessionService {
     roomId: string,
   ) {
     const gameSession = new GameSession(gameBoardObjectId, socketId);
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+    await this.updateGameSession(roomId, gameSession);
   }
 
   async addPlayer(socketId: string, roomId: string) {
@@ -47,11 +47,11 @@ export class GameSessionService {
     if (playerIdx < 0) {
       throw new NotFoundException(GameSessionError.playerNotFound);
     }
-    if (gameSession.currentTurn.playerId == player.id) {
-      await this.resetCurrentTurn(roomId);
-    }
     gameSession.players.splice(playerIdx);
-    await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+    await this.updateGameSession(roomId, gameSession);
+    if (gameSession.currentTurn.playerId == player.id) {
+      await this.updateTurn(roomId);
+    }
     return gameSession;
   }
 
@@ -64,61 +64,73 @@ export class GameSessionService {
     return image;
   }
 
-  async addNewImage(roomId: string, image: string) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.cardsImage.push(image);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
   async setPlayer(roomId: string, playerId: number) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
     gameSession.currentTurn.playerId = playerId;
     await this.updateGameSession(roomId, gameSession);
   }
 
-  async processCurrentTurn(
-    roomId: string,
-    card: { position: number; id: number },
-    playerId: number,
-  ) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    const cardIdx = gameSession.currentTurn.cards.findIndex(
-      (_card) => _card.position == card.position,
-    );
-    gameSession.currentTurn.cards[cardIdx].id = card.id;
-    gameSession.currentTurn.playerId = playerId;
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async addCard(roomId: string, card: { position: number; id: number }) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards.push(card);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async removeCardByPosition(roomId: string, position: number) {
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    const cardIdx = gameSession.currentTurn.cards.findIndex(
-      (card) => card.position == position,
-    );
-    gameSession.currentTurn.cards.splice(cardIdx, 1);
-    await this.updateGameSession(roomId, gameSession);
-  }
-
-  async resetCurrentTurn(roomId: string) {
-    await this.updateGameTimeOut(roomId);
-    const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.currentTurn.cards = [];
-    await this.updateGameSession(roomId, gameSession);
-  }
-
   async updateGameTimeOut(roomId: string) {
     const gameSession = await this.getGameSessionFromRoomId(roomId);
-    gameSession.lastTurnDate = Date.now();
+    gameSession.currentTurn.lastTurnDate = Date.now();
     await this.updateGameSession(roomId, gameSession);
   }
 
   async updateGameSession(roomId: string, gameSession: GameSession) {
     await this.cacheManager.set(roomId, JSON.stringify(gameSession));
+  }
+
+  async updateTurn(roomId: string) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards = [];
+    gameSession.currentTurn.lastTurnDate = Date.now();
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async flipCard(roomId: string, card: { position: number }, playerId: number) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.cards.push(card);
+    gameSession.currentTurn.playerId = playerId;
+    gameSession.currentTurn.lastTurnDate = Date.now();
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async canFlipCard(roomId: string, positionSent: number): Promise<boolean> {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    if (
+      gameSession.currentTurn.cards.length &&
+      gameSession.currentTurn.cards.length >= 2
+    ) {
+      return false;
+    }
+    if (
+      gameSession.currentTurn.cards.length &&
+      gameSession.currentTurn.cards[0].position == positionSent
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  async unFlipCard(
+    roomId: string,
+    cardPosition: number,
+    image: string | undefined,
+  ) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    const idx = gameSession.currentTurn.cards.findIndex(
+      (card) => card.position == cardPosition,
+    );
+    gameSession.currentTurn.cards.splice(idx, 1);
+    if (image) {
+      gameSession.cardsImage.push(image);
+    }
+    await this.updateGameSession(roomId, gameSession);
+  }
+
+  async updateForceAvailable(roomId: string, isAvailable: boolean) {
+    const gameSession = await this.getGameSessionFromRoomId(roomId);
+    gameSession.currentTurn.forceUpdateAvailable = isAvailable;
+    await this.updateGameSession(roomId, gameSession);
   }
 }
