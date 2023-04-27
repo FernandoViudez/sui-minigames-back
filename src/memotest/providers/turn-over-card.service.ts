@@ -105,13 +105,17 @@ export class TurnOverCardGateway {
       (await this.gameSessionService.getGameSessionFromRoomId(player.roomId))
         .currentTurn.cards.length == 2
     ) {
-      const subscriptionId = await this.blockchainQueryService.on(
-        'TurnChanged',
-        async () => {
-          await this.blockchainQueryService.unsubscribe(subscriptionId);
-          await this.gameSessionService.updateTurn(player.roomId);
-        },
-      );
+      try {
+        const subscriptionId = await this.blockchainQueryService.on(
+          'TurnChanged',
+          async () => {
+            await this.blockchainQueryService.unsubscribe(subscriptionId);
+            await this.gameSessionService.updateTurn(player.roomId);
+          },
+        );
+      } catch (error) {
+        await this.gameSessionService.updateTurn(player.roomId);
+      }
     }
   }
 
