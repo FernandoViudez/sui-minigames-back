@@ -15,12 +15,14 @@ import { validationPipeConfig } from '../../_config/validation-pipe.config';
 import { constants } from '../../environment/constants';
 import { GeneralError } from '../errors/general.error';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
-import { UseFilters } from '@nestjs/common/decorators';
+import { UseFilters, UseGuards } from '@nestjs/common/decorators';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { RoomService } from './room.service';
 import { GameSessionService } from './game-session.service';
 import { PlayerService } from './player.service';
+import { WsThrottlerGuard } from '../../providers/ws-throttler.service';
 
+@UseGuards(WsThrottlerGuard)
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,

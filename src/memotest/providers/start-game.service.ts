@@ -3,6 +3,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   UseFilters,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import {
@@ -25,7 +26,9 @@ import { Namespace } from '../../_type/socket-namespaces.type';
 import { GameSessionService } from './game-session.service';
 import { PlayerService } from './player.service';
 import { RoomService } from './room.service';
+import { WsThrottlerGuard } from '../../providers/ws-throttler.service';
 
+@UseGuards(WsThrottlerGuard)
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,

@@ -4,6 +4,7 @@ import {
   UsePipes,
   UnauthorizedException,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ConnectedSocket,
@@ -29,7 +30,9 @@ import { Player } from '../interface/player.interface';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { PlayerService } from './player.service';
 import { GameSessionService } from './game-session.service';
+import { WsThrottlerGuard } from '../../providers/ws-throttler.service';
 
+@UseGuards(WsThrottlerGuard)
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,

@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   UseFilters,
+  UseGuards,
 } from '@nestjs/common';
 import {
   SubscribeMessage,
@@ -13,12 +14,14 @@ import { Cache } from 'cache-manager';
 import { Server } from 'socket.io';
 import { constants } from '../../environment/constants';
 import { environment } from '../../environment/environment';
+import { WsThrottlerGuard } from '../../providers/ws-throttler.service';
 import { Namespace } from '../../_type/socket-namespaces.type';
 import { MemotestExceptionsFilter } from '../errors/memotest-error-filter';
 import { GameBoardStatus } from '../interface/game-board.interface';
 import { Room, RoomResponse } from '../interface/room.interface';
 import { GameSessionService } from '../providers/game-session.service';
 
+@UseGuards(WsThrottlerGuard)
 @UseFilters(MemotestExceptionsFilter)
 @WebSocketGateway(environment.sockets.port, {
   ...constants.socketConfig,

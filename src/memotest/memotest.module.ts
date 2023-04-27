@@ -10,11 +10,16 @@ import { LeaveRoomGateway } from './providers/leave-room.service';
 import { RoomService } from './providers/room.service';
 import { GameSessionService } from './providers/game-session.service';
 import { PlayerService } from './providers/player.service';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     CacheModule.register({
       ttl: environment.memotest.matchDuration,
+    }),
+    ThrottlerModule.forRoot({
+      ttl: 1,
+      limit: 10,
     }),
   ],
   providers: [
